@@ -1,0 +1,41 @@
+{
+  "name": "digibyte-wallet",
+  "version": "1.0.0",
+  "description": "A CLI DigiByte Wallet",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "cls && node src/index.js",
+    "test": "cls && node src/test.js",
+    "build": "pkg . --compress Brotli"
+  },
+  "pkg": {
+    "assets": [
+      "/node_modules/better-sqlite3/build/Release/better_sqlite3.node"
+    ],
+    "targets": [
+      "node14-win-x64"
+    ],
+    "outputPath": "./build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RenzoDD/digibyte-wallet.git"
+  },
+  "keywords": [
+    "digibyte",
+    "wallet",
+    "cryptocurrency"
+  ],
+  "author": "Renzo Diaz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RenzoDD/digibyte-wallet/issues"
+  },
+  "homepage": "https://github.com/RenzoDD/digibyte-wallet#readme",
+  "dependencies": {
+    "digibyte-js": "^1.1.1",
+    "sync-request": "^6.1.0",
+    "readline-sync": "^1.4.10",
+    "better-sqlite3": "^7.4.5"
+  }
+}
