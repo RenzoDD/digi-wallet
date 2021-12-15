@@ -44,6 +44,13 @@ class Console
         var cmd = !global.wallet.name ? "digibyte-wallet" : global.wallet.name;
         console.log(cmd + " > " + text);
     }
+    static Clear() {
+        console.clear();
+    }
+    static Pause() {
+        var cmd = !global.wallet.name ? "digibyte-wallet" : global.wallet.name;
+        reader.keyIn(cmd + " > Press any key to continue...");
+    }
 }
 
 

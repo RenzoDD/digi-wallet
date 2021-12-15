@@ -24,6 +24,28 @@ class Wallet {
         entropy = Util.SHA256(Buffer.concat([Util.SHA256(entropy), Util.RandomBuffer()]));
 
         var mnemonic = BIP39.CreateMnemonic(entropy.slice(16));
+
+        if (Console.ReadLine("See Mnemonic (Y/N)") != "N") {
+            var words = mnemonic.split(" ");
+            for (var i = 1; i <= 12; i++) {
+                Console.Clear();
+                Console.Log("Word " + i + ": " + words[i - 1]);
+                Console.Pause();
+            }
+            Console.Clear();
+
+            for (var i = 1; i <= 3; i++) {
+                var n = Math.floor(Math.random() * 12);
+                do {
+                    var answer = Console.ReadLine("Enter word N " + (n + 1));
+                } while (answer != words[n]);
+            }
+
+            Console.Clear();
+            Console.Log("All done, NEVER share this words or you will lose your coins");
+            Console.Pause();
+        }
+
         var seed = BIP39.MnemonicToSeed(mnemonic);
         var xprv = HDPrivateKey.fromSeed(seed).toString();
         var xpub = HDPrivateKey.fromSeed(seed).derive("m/" + (type == "legacy" ? 44 : (type == "segwit" ? 84 : 49)) + "'/20'/0'").hdPublicKey.toString();
