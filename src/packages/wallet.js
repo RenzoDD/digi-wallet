@@ -1,6 +1,8 @@
 const DigiByte = require('digibyte-js');
 const BIP39 = DigiByte.BIP39;
 const HDPrivateKey = DigiByte.HDPrivateKey;
+const HDPublicKey = DigiByte.HDPublicKey;
+const Address = DigiByte.Address;
 
 const SQLite = require('better-sqlite3');
 const Console = require('./console');
@@ -13,7 +15,6 @@ class Wallet {
             if (name == "") name = "default";
         }
         type = !type ? "segwit" : type;
-        type = (type == "legacy" ? 44 : (type == "segwit" ? 84 : 49));
         var network = !testnet ? "livenet" : "testnet";
 
         var password = Console.ReadPassword("Create password");
@@ -25,7 +26,7 @@ class Wallet {
         var mnemonic = BIP39.CreateMnemonic(entropy.slice(16));
         var seed = BIP39.MnemonicToSeed(mnemonic);
         var xprv = HDPrivateKey.fromSeed(seed).toString();
-        var xpub = HDPrivateKey.fromSeed(seed).derive("m/" + type + "'/20'/0'").hdPublicKey.toString();
+        var xpub = HDPrivateKey.fromSeed(seed).derive("m/" + (type == "legacy" ? 44 : (type == "segwit" ? 84 : 49)) + "'/20'/0'").hdPublicKey.toString();
 
         global.wallet.network = network;
         global.wallet.type = type;
@@ -40,7 +41,7 @@ class Wallet {
         var path = global.wallet.path + "\\" + name + "." + (network == "livenet" ? "dgb" : "dgbt");
         global.wallet.database = SQLite(path);
 
-        global.wallet.database.prepare("CREATE TABLE Addresses( AddressID INTEGER, DerivationPath TEXT NOT NULL UNIQUE, WIF TEXT NOT NULL UNIQUE, Address TEXT NOT NULL UNIQUE, PRIMARY KEY (AddressID AUTOINCREMENT))").run();
+        global.wallet.database.prepare("CREATE TABLE Addresses( AddressID INTEGER, Change INTEGER NOT NULL, `Index` INTEGER NOT NULL, WIF TEXT NOT NULL, Address TEXT NOT NULL UNIQUE, PRIMARY KEY (AddressID AUTOINCREMENT))").run();
         global.wallet.database.prepare("CREATE TABLE UTXOs( UtxoID INTEGER, AddressID INTEGER NOT NULL, TXID TEXT NOT NULL, Script TEXT NOT NULL, N INTEGER NOT NULL, Satoshis INTEGER NOT NULL, Height INTEGER NOT NULL, PRIMARY KEY (UtxoID AUTOINCREMENT), FOREIGN KEY (AddressID) REFERENCES Addresses (AddressID), UNIQUE(TXID, N))").run();
         global.wallet.database.prepare("CREATE TABLE Data( Key TEXT NOT NULL UNIQUE, Value TEXT NOT NULL);").run();
         
@@ -53,6 +54,24 @@ class Wallet {
         data.run(["network", network]);
 
         global.wallet.name = name;
+    }
+    static GenerateAddress() {
+        if (!global.wallet.database) {
+            Console.Log("No wallet open!");
+            return;
+        }
+
+        var type = global.wallet.database.prepare("SELECT Value FROM Data WHERE Key == 'type'").get().Value;
+        var network = global.wallet.database.prepare("SELECT Value FROM Data WHERE Key == 'network'").get().Value;
+        
+        var quantity = global.wallet.database.prepare("SELECT COUNT(*) AS Quantity FROM Addresses WHERE Change == 0").get().Quantity;
+
+        var hdPublicKey = HDPublicKey.fromString(global.wallet.xpub).derive(0).derive(quantity);
+        var address = new Address(hdPublicKey.publicKey, network, type).toString();
+
+        global.wallet.database.prepare("INSERT INTO Addresses (Change, `Index`, WIF, Address) VALUES (?,?,?,?)").run([0, quantity, "", address]);
+        Console.Log("Address: " + address);
+
     }
 }
 

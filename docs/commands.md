@@ -11,3 +11,13 @@ digibyte-wallet > createwallet -name my_wallet
 ```
 
 Find more information [here](createwallet.md).
+
+## Generate Address
+
+Generate a new address from the master public key
+
+```
+digibyte-wallet > generateaddress
+```
+
+Find more information [here](generateaddress.md).

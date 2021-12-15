@@ -1,9 +1,10 @@
 CREATE TABLE Addresses (
-	AddressID		INTEGER,
+	AddressID	INTEGER,
 
-	DerivationPath	TEXT		NOT NULL    UNIQUE,
-	WIF             TEXT		NOT NULL	UNIQUE,
-	Address			TEXT		NOT NULL	UNIQUE,
+	Change		INTEGER	NOT NULL,
+	`Index`		INTEGER	NOT NULL,
+	WIF         TEXT	NOT NULL,
+	Address		TEXT	NOT NULL	UNIQUE,
 
 	PRIMARY KEY (AddressID AUTOINCREMENT)
 );

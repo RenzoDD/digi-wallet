@@ -40,6 +40,10 @@ class Console
         var data = reader.question(cmd + " > " + text + ": ", { hideEchoBack: true });
         return data;
     }
+    static Log(text) {
+        var cmd = !global.wallet.name ? "digibyte-wallet" : global.wallet.name;
+        console.log(cmd + " > " + text);
+    }
 }
 
 
