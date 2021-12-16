@@ -14,8 +14,12 @@ class Wallet {
             name = Console.ReadLine("Name (default)");
             if (name == "") name = "default";
         }
+        
         type = !type ? "segwit" : type;
+        if (type != 'legacy' && type != 'native' && type != 'segwit') type = 'segwit';
+
         var network = !testnet ? "livenet" : "testnet";
+        if (type != 'legacy') network += "-" + type;
 
         var password = Console.ReadPassword("Create password");
         var salt = Util.RandomBuffer();
@@ -47,12 +51,16 @@ class Wallet {
         }
 
         var seed = BIP39.MnemonicToSeed(mnemonic);
-        var xprv = HDPrivateKey.fromSeed(seed).toString();
-        var xpub = HDPrivateKey.fromSeed(seed).derive("m/" + (type == "legacy" ? 44 : (type == "segwit" ? 84 : 49)) + "'/20'/0'").hdPublicKey.toString();
+        var xprv = HDPrivateKey.fromSeed(seed, network);
+        var xpub = xprv.derive("m/" + (type == "legacy" ? 44 : (type == "segwit" ? 84 : 49)) + "'/20'/0'").hdPublicKey.toString();
+
+        xprv = xprv.toString();
 
         global.wallet.network = network;
         global.wallet.type = type;
         global.wallet.xpub = xpub;
+
+        console.log(xpub);
 
         xprv = Util.EncryptAES256(xprv, password);
         xpub = Util.EncryptAES256(xpub, password);
@@ -60,7 +68,7 @@ class Wallet {
         password = Util.SHA256(password);
         password = Util.SHA256(Buffer.concat([password, salt]));
 
-        var path = global.wallet.path + "\\" + name + "." + (network == "livenet" ? "dgb" : "dgbt");
+        var path = global.wallet.path + "\\" + name + "." + (network.startsWith("livenet") ? "dgb" : "dgbt");
         global.wallet.database = SQLite(path);
 
         global.wallet.database.prepare("CREATE TABLE Addresses( AddressID INTEGER, Change INTEGER NOT NULL, `Index` INTEGER NOT NULL, WIF TEXT NOT NULL, Address TEXT NOT NULL UNIQUE, PRIMARY KEY (AddressID AUTOINCREMENT))").run();
@@ -75,7 +83,11 @@ class Wallet {
         data.run(["type", type]);
         data.run(["network", network]);
 
+        salt = xprv = xpub = type = network = null;
+
         global.wallet.name = name;
+
+        Console.Log("Wallet created! - " + path);
     }
     static GenerateAddress() {
         if (!global.wallet.database) {
