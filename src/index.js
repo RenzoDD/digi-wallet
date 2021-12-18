@@ -14,6 +14,9 @@ while(true) {
         case 'createwallet':
             Wallet.CreateWallet(cmd.arguments.name, cmd.arguments.type, cmd.flags.testnet);
             break;
+        case 'openwallet':
+            Wallet.OpenWallet(cmd.arguments.path, cmd.arguments.password);
+            break;
         case 'generateaddress':
             Wallet.GenerateAddress();
             break;

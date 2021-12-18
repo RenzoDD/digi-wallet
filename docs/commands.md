@@ -12,6 +12,16 @@ digibyte-wallet > createwallet -name my_wallet
 
 Find more information [here](createwallet.md).
 
+## Open Wallet
+
+Open an existing wallet
+
+```
+digibyte-wallet > openwallet
+```
+
+Find more information [here](openwallet.md).
+
 ## Generate Address
 
 Generate a new address from the master public key

@@ -5,6 +5,8 @@ const HDPublicKey = DigiByte.HDPublicKey;
 const Address = DigiByte.Address;
 
 const SQLite = require('better-sqlite3');
+const fs = require('fs');
+
 const Console = require('./console');
 const Util = require('./util');
 
@@ -82,6 +84,7 @@ class Wallet {
         data.run(["xpub", xpub]);
         data.run(["type", type]);
         data.run(["network", network]);
+        data.run(["name", name]);
 
         salt = xprv = xpub = type = network = null;
 
@@ -89,14 +92,45 @@ class Wallet {
 
         Console.Log("Wallet created! - " + path);
     }
+    static OpenWallet(path, password) {
+        if (!path) path = Console.ReadLine("Enter file path");
+        if (!password) password = Console.ReadPassword("Password");
+
+        if(!fs.existsSync(path)) {
+            Console.Log("The file doesn't exist!");
+            return;
+        }
+
+        global.wallet.database = SQLite(path);
+        var query = global.wallet.database.prepare("SELECT Value FROM Data WHERE Key = ?");
+        var passwordDB = query.get(['password']).Value;
+        var saltDB = query.get(['salt']).Value;
+
+        var passwordUser = Util.SHA256(Buffer.concat([Util.SHA256(password), saltDB]));
+
+        if (Buffer.compare(passwordUser, passwordDB) !== 0){
+            Console.Log('Invalid password');
+            global.wallet.database.close();
+            password = null;
+            return;
+        }
+
+        global.wallet.network = query.get('network').Value;
+        global.wallet.type = query.get('type').Value;
+        global.wallet.name = query.get('name').Value;
+        global.wallet.xpub = Util.DecryptAES256(query.get('xpub').Value, password);
+        
+        Console.Log("Wallet opened!");
+    }
     static GenerateAddress() {
         if (!global.wallet.database) {
             Console.Log("No wallet open!");
             return;
         }
 
-        var type = global.wallet.database.prepare("SELECT Value FROM Data WHERE Key == 'type'").get().Value;
-        var network = global.wallet.database.prepare("SELECT Value FROM Data WHERE Key == 'network'").get().Value;
+        var query = global.wallet.database.prepare("SELECT Value FROM Data WHERE Key = ?");
+        var type = query.get('type').Value;
+        var network = query.get('network').Value;
         
         var quantity = global.wallet.database.prepare("SELECT COUNT(*) AS Quantity FROM Addresses WHERE Change == 0").get().Quantity;
 
