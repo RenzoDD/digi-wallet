@@ -22,6 +22,16 @@ digibyte-wallet > openwallet
 
 Find more information [here](openwallet.md).
 
+## Close Wallet
+
+Close a wallet
+
+```
+my-wallet > closewallet
+```
+
+Find more information [here](closewallet.md).
+
 ## Generate Address
 
 Generate a new address from the master public key

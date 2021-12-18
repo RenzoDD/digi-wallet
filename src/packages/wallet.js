@@ -111,7 +111,7 @@ class Wallet {
         if (Buffer.compare(passwordUser, passwordDB) !== 0){
             Console.Log('Invalid password');
             global.wallet.database.close();
-            password = null;
+            password = undefined;
             return;
         }
 
@@ -120,26 +120,35 @@ class Wallet {
         global.wallet.name = query.get('name').Value;
         global.wallet.xpub = Util.DecryptAES256(query.get('xpub').Value, password);
         
+        password = undefined;
         Console.Log("Wallet opened!");
+    }
+    static CloseWallet() {
+        if (!global.wallet.database) {
+            Console.Log("No wallet open!");
+            return;
+        }
+        
+        global.wallet.database.close();
+        global.wallet.network = undefined;
+        global.wallet.type = undefined;
+        global.wallet.name = undefined;
+        global.wallet.xpub = undefined;
+        Console.Log("Wallet closed!");
     }
     static GenerateAddress() {
         if (!global.wallet.database) {
             Console.Log("No wallet open!");
             return;
         }
-
-        var query = global.wallet.database.prepare("SELECT Value FROM Data WHERE Key = ?");
-        var type = query.get('type').Value;
-        var network = query.get('network').Value;
         
         var quantity = global.wallet.database.prepare("SELECT COUNT(*) AS Quantity FROM Addresses WHERE Change == 0").get().Quantity;
 
         var hdPublicKey = HDPublicKey.fromString(global.wallet.xpub).derive(0).derive(quantity);
-        var address = new Address(hdPublicKey.publicKey, network, type).toString();
+        var address = new Address(hdPublicKey.publicKey, global.wallet.network, global.wallet.type).toString();
 
         global.wallet.database.prepare("INSERT INTO Addresses (Change, `Index`, WIF, Address) VALUES (?,?,?,?)").run([0, quantity, "", address]);
         Console.Log("Address: " + address);
-
     }
 }
 

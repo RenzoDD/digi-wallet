@@ -17,10 +17,13 @@ while(true) {
         case 'openwallet':
             Wallet.OpenWallet(cmd.arguments.path, cmd.arguments.password);
             break;
+        case 'closewallet':
+            Wallet.CloseWallet();
+            break;
         case 'generateaddress':
             Wallet.GenerateAddress();
             break;
         default:
-            console.log("Unknown command!");
+            Console.Log("Unknown command!");
     }
 }
