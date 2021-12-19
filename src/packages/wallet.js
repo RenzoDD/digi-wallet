@@ -68,8 +68,6 @@ class Wallet {
         global.wallet.type = type;
         global.wallet.xpub = xpub;
 
-        console.log(xpub);
-
         xprv = Util.EncryptAES256(xprv, password);
         xpub = Util.EncryptAES256(xpub, password);
 
@@ -77,6 +75,7 @@ class Wallet {
         password = Util.SHA256(Buffer.concat([password, salt]));
 
         var path = global.wallet.path + "\\" + name + "." + (network.startsWith("livenet") ? "dgb" : "dgbt");
+
         global.wallet.database = SQLite(path);
 
         global.wallet.database.prepare("CREATE TABLE Addresses( address TEXT NOT NULL UNIQUE, label TEXT NOT NULL, change INTEGER NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (address))").run();
@@ -194,12 +193,12 @@ class Wallet {
 
         return { address, WIF };
     }
-    static Sync() {
+    static async Sync() {
         if (!global.wallet.database) {
             Console.Log("No wallet open!");
             return;
         }
-        var data = Util.FetchData('https://digibyteblockexplorer.com/api/v2/utxo/' + global.wallet.xpub + '?details=tokenBalances');
+        var data = await Util.FetchData('https://digibyteblockexplorer.com/api/v2/utxo/' + global.wallet.xpub + '?details=tokenBalances');
         global.wallet.database.prepare("DELETE FROM UTXOs").run();
         var query = global.wallet.database.prepare("INSERT INTO UTXOs (txid,vout,satoshis,height,script,address,path) VALUES (?,?,?,?,?,?,?)");
         for (var i = 0; i < data.length; i++) {

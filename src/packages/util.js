@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const request = require('sync-request');
+const axios = require('axios');
 const fs = require('fs');
 
 class Util {
@@ -27,8 +27,9 @@ class Util {
     static FileExist(path) {
         return fs.existsSync(path);
     }
-    static FetchData(url) {
-        return JSON.parse(request('GET', url).getBody('utf-8'));
+    static async FetchData(url) {
+        var data = await axios.get(url);
+        return data.data;
     }
 }
 module.exports = Util;
