@@ -1,28 +1,22 @@
 CREATE TABLE Addresses (
-	AddressID	INTEGER,
+	address		TEXT	NOT NULL	UNIQUE,
+	label		TEXT	NOT NULL,
+	change		INTEGER	NOT NULL,
+	n			INTEGER NOT NULL,
 
-	Change		INTEGER	NOT NULL,
-	`Index`		INTEGER	NOT NULL,
-	WIF         TEXT	NOT NULL,
-	Address		TEXT	NOT NULL	UNIQUE,
-
-	PRIMARY KEY (AddressID AUTOINCREMENT)
+	PRIMARY KEY (address)
 );
 
 CREATE TABLE UTXOs (
-	UtxoID			INTEGER,
+	txid		TEXT	NOT NULL,
+	vout		INTEGER	NOT NULL,
+	satoshis	INTEGER	NOT NULL,
+	height		INTEGER NOT NULL,
+	script		TEXT	NOT NULL,
+    address     TEXT	NOT NULL,
+	path		TEXT	NOT NULL,
 
-	AddressID		INTEGER		NOT NULL,
-    
-	TXID			TEXT		NOT NULL,
-	Script			TEXT		NOT NULL,
-	N				INTEGER		NOT NULL,
-	Satoshis		INTEGER		NOT NULL,
-    Height          INTEGER     NOT NULL,
-
-	PRIMARY KEY (UtxoID AUTOINCREMENT),
-	FOREIGN KEY (AddressID) REFERENCES Addresses (AddressID),
-	UNIQUE(TXID, N)
+	PRIMARY KEY (txid, vout)
 );
 
 CREATE TABLE Data (

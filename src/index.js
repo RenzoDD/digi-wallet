@@ -17,6 +17,9 @@ while(true) {
         case 'openwallet':
             Wallet.OpenWallet(cmd.arguments.path, cmd.arguments.password);
             break;
+        case 'sync':
+            Wallet.Sync();
+            break;
         case 'closewallet':
             Wallet.CloseWallet();
             break;
