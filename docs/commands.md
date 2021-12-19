@@ -37,7 +37,15 @@ Find more information [here](closewallet.md).
 Generate a new address from the master public key
 
 ```
-digibyte-wallet > generateaddress
+my-wallet > generateaddress
 ```
 
 Find more information [here](generateaddress.md).
+
+## Sync
+
+Retrive UTXOs information from a public DigiByte full node
+
+```
+my-wallet > sync
+```

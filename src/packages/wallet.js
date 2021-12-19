@@ -156,7 +156,12 @@ class Wallet {
             return;
         }
         var data = Util.FetchData('https://digibyteblockexplorer.com/api/v2/utxo/' + global.wallet.xpub + '?details=tokenBalances');
-        
+        global.wallet.database.prepare("DELETE FROM UTXOs").run();
+        var query = global.wallet.database.prepare("INSERT INTO UTXOs (txid,vout,satoshis,height,script,address,path) VALUES (?,?,?,?,?,?,?)");
+        for (var i = 0; i < data.length; i++) {
+            var utxo = data[i];
+            query.run([utxo.txid,utxo.vout,utxo.value,utxo.height,utxo.scriptPubKey,utxo.address,utxo.path])
+        }
     }
 }
 
