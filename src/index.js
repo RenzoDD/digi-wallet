@@ -12,20 +12,30 @@ while(true) {
     
     switch (cmd.command) {
         case 'createwallet':
-            Wallet.CreateWallet(cmd.arguments.name, cmd.arguments.type, cmd.flags.testnet);
+            var path = Wallet.CreateWallet(cmd.arguments.name, cmd.arguments.password, cmd.arguments.entropy, cmd.arguments.type, cmd.flags.testnet, cmd.flags.nobackup, cmd.flags.noentropy);
+            Console.Log("Wallet created! - " + path);
             break;
         case 'openwallet':
             Wallet.OpenWallet(cmd.arguments.path, cmd.arguments.password);
+            Console.Log("Wallet opened!");
             break;
         case 'sync':
             Wallet.Sync();
             break;
         case 'closewallet':
             Wallet.CloseWallet();
+            Console.Log("Wallet closed!");
             break;
         case 'generateaddress':
-            Wallet.GenerateAddress();
+            var pair = Wallet.GenerateAddress(cmd.arguments.label, cmd.arguments.WIF, cmd.arguments.password, cmd.arguments.type, cmd.flags.reveal, cmd.flags.nolabel, cmd.flags.random);
+            if (pair.address) Console.Log("Address: " + pair.address);
+            if (pair.WIF) Console.Log("WIF: " + pair.WIF);
             break;
+        case 'clear':
+            Console.Clear();
+            break;
+        case 'exit':
+            return;
         default:
             Console.Log("Unknown command!");
     }

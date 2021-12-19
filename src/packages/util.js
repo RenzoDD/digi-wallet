@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const request = require('sync-request');
+const fs = require('fs');
 
 class Util {
     static SHA256(data) {
@@ -22,6 +23,9 @@ class Util {
         const decryptedData = decipher.update(data, "hex", "utf-8") + decipher.final("utf8");
 
         return decryptedData;
+    }
+    static FileExist(path) {
+        return fs.existsSync(path);
     }
     static FetchData(url) {
         return JSON.parse(request('GET', url).getBody('utf-8'));
