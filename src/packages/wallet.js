@@ -6,6 +6,7 @@ const Address = DigiByte.Address;
 const PrivateKey = DigiByte.PrivateKey;
 const PublicKey = DigiByte.PublicKey;
 const Unit = DigiByte.Unit;
+const Script = DigiByte.Script;
 
 const SQLite = require('better-sqlite3');
 const Console = require('./console');
@@ -199,16 +200,33 @@ class Wallet {
             Console.Log("No wallet open!");
             return;
         }
-        var data = await Util.FetchData('https://digibyteblockexplorer.com/api/v2/utxo/' + global.wallet.xpub + '?details=tokenBalances');
+        var server = 'digiexplorer.info';
+        if (global.wallet.network.startsWith('testnet'))
+            server = 'testnetexplorer.digibyteservers.io';
+
+        var data = await Util.FetchData('https://' + server + '/api/v2/utxo/' + global.wallet.xpub + '?details=tokenBalances');
         global.wallet.database.prepare("DELETE FROM UTXOs").run();
         var query = global.wallet.database.prepare("INSERT INTO UTXOs (txid,vout,satoshis,height,script,address,path) VALUES (?,?,?,?,?,?,?)");
-        var satoshis = 0;
+        var confirmed = 0;
+        var unconfirmed = 0;
         for (var i = 0; i < data.length; i++) {
             var utxo = data[i];
-            query.run([utxo.txid,utxo.vout,utxo.value,utxo.height,utxo.scriptPubKey,utxo.address,utxo.path])
-            satoshis += parseInt(utxo.value);
+
+            var address = Address.fromString(utxo.address);
+            var script = Script.buildPublicKeyHashOut(address);
+            script = script.toHex();
+            |
+            query.run([utxo.txid,utxo.vout,utxo.value,utxo.height || 0,script,utxo.address,utxo.path])
+            
+            if (utxo.confirmations > 0)
+                confirmed += parseInt(utxo.value);
+            else
+                unconfirmed += parseInt(utxo.value);
         }
-        return Unit.fromSatoshis(satoshis).toDGB();
+        return {
+            confirmed: Unit.fromSatoshis(confirmed).toDGB().toFixed(8), 
+            unconfirmed: Unit.fromSatoshis(unconfirmed).toDGB().toFixed(8)
+        };
     }
     static xpub() {
         if (!global.wallet.database) {

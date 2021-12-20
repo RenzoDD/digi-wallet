@@ -22,7 +22,8 @@
                 break;
             case 'sync':
                 var balance = await Wallet.Sync();
-                if(balance) Console.Log("Balance: " + balance);
+                if(balance) Console.Log("Confirmed: " + balance.confirmed);
+                if(balance) Console.Log("Unconfirmed: " + balance.unconfirmed);
                 break;
             case 'closewallet':
                 Wallet.CloseWallet();
