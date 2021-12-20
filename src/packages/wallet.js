@@ -5,6 +5,7 @@ const HDPublicKey = DigiByte.HDPublicKey;
 const Address = DigiByte.Address;
 const PrivateKey = DigiByte.PrivateKey;
 const PublicKey = DigiByte.PublicKey;
+const Unit = DigiByte.Unit;
 
 const SQLite = require('better-sqlite3');
 const Console = require('./console');
@@ -201,10 +202,20 @@ class Wallet {
         var data = await Util.FetchData('https://digibyteblockexplorer.com/api/v2/utxo/' + global.wallet.xpub + '?details=tokenBalances');
         global.wallet.database.prepare("DELETE FROM UTXOs").run();
         var query = global.wallet.database.prepare("INSERT INTO UTXOs (txid,vout,satoshis,height,script,address,path) VALUES (?,?,?,?,?,?,?)");
+        var satoshis = 0;
         for (var i = 0; i < data.length; i++) {
             var utxo = data[i];
             query.run([utxo.txid,utxo.vout,utxo.value,utxo.height,utxo.scriptPubKey,utxo.address,utxo.path])
+            satoshis += parseInt(utxo.value);
         }
+        return Unit.fromSatoshis(satoshis).toDGB();
+    }
+    static xpub() {
+        if (!global.wallet.database) {
+            Console.Log("No wallet open!");
+            return;
+        }
+        return global.wallet.xpub;
     }
 
     static CheckPassword(password) {

@@ -48,4 +48,14 @@ Retrive UTXOs information from a public DigiByte full node
 
 ```
 my-wallet > sync
+my-wallet > Balance: 1025.556
+```
+
+## Xpub
+
+Get the main HD public key. Derived up to level 3
+
+```
+my-wallet > xpub
+my-wallet > vpub5ZZX2YYoFAU6JBCLR8P4tZMMbsA9ZWTfSeFsZ2iF9ZPw6xKuGUPG2ewk5Q8xQP9DwB9DPDoeD5kBYdmymuZmgQhqTrsLr9NBQZm2cmcw3bz
 ```

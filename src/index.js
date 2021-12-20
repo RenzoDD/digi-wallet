@@ -21,7 +21,8 @@
                 Console.Log("Wallet opened!");
                 break;
             case 'sync':
-                await Wallet.Sync();
+                var balance = await Wallet.Sync();
+                if(balance) Console.Log("Balance: " + balance);
                 break;
             case 'closewallet':
                 Wallet.CloseWallet();
@@ -31,6 +32,10 @@
                 var pair = Wallet.GenerateAddress(cmd.arguments.label, cmd.arguments.WIF, cmd.arguments.password, cmd.arguments.type, cmd.flags.reveal, cmd.flags.nolabel, cmd.flags.random);
                 if (pair.address) Console.Log("Address: " + pair.address);
                 if (pair.WIF) Console.Log("WIF: " + pair.WIF);
+                break;
+            case 'xpub':
+                var xpub = Wallet.xpub();
+                if(xpub) Console.Log(xpub);
                 break;
             case 'clear':
                 Console.Clear();
