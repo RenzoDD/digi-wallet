@@ -1,6 +1,10 @@
 const crypto = require('crypto');
-const axios = require('axios');
 const fs = require('fs');
+
+const axios = require('axios');
+axios.defaults.validateStatus = function () {
+    return true;
+};
 
 class Util {
     static SHA256(data) {

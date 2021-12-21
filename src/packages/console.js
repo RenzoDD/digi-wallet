@@ -14,7 +14,7 @@ class Console
         var data = reader.question(cmd + " > ");
         var words = data.split(' ').filter(x => x != "");
     
-        obj.command = words[0];
+        obj.command = words[0] || "";
     
         for (var i = 1; i < words.length; i++) {
             var word = words[i];

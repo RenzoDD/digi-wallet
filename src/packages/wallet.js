@@ -6,6 +6,7 @@ const Address = DigiByte.Address;
 const PrivateKey = DigiByte.PrivateKey;
 const PublicKey = DigiByte.PublicKey;
 const Unit = DigiByte.Unit;
+const Transaction = DigiByte.Transaction;
 const Script = DigiByte.Script;
 
 const SQLite = require('better-sqlite3');
@@ -13,6 +14,17 @@ const Console = require('./console');
 const Util = require('./util');
 
 class Wallet {
+    static Logo() {
+        console.log("\x1b[40m\x1b[34m"," _____   _       _ ______                  ");
+        console.log("\x1b[40m\x1b[34m","(____ \\ (_)     (_|____  \\       _         ");
+        console.log("\x1b[40m\x1b[34m"," _   \\ \\ _  ____ _ ____)  )_   _| |_  ____ ");
+        console.log("\x1b[40m\x1b[34m","| |   | | |/ _  | |  __  (| | | |  _)/ _  )");
+        console.log("\x1b[40m\x1b[34m","| |__/ /| ( ( | | | |__)  ) |_| | |_( (/ / ");
+        console.log("\x1b[40m\x1b[34m","|_____/ |_|\\_|| |_|______/ \\__  |\\___)____)");
+        console.log("\x1b[40m\x1b[34m","          (_____|         (____/           ");
+        console.log("\x1b[40m\x1b[36m","             By Renzo Diaz & DigiFaucet.org");
+        console.log("\x1b[40m\x1b[37m");
+    }
     static CreateWallet(name, password, entropy, type, testnet, nobackup, noentropy) {
         if (!name) {
             name = Console.ReadLine("Name (default)");
@@ -62,7 +74,7 @@ class Wallet {
 
         var seed = BIP39.MnemonicToSeed(mnemonic);
         var xprv = HDPrivateKey.fromSeed(seed, network);
-        var xpub = xprv.derive("m/" + (type == "legacy" ? 44 : (type == "segwit" ? 84 : 49)) + "'/20'/0'").hdPublicKey.toString();
+        var xpub = xprv.derive("m/" + (type == "legacy" ? 44 : (type == "segwit" ? 84 : 49)) + "'/" + (testnet ? 1 : 20) + "'/0'").hdPublicKey.toString();
 
         xprv = xprv.toString();
 
@@ -76,7 +88,7 @@ class Wallet {
         password = Util.SHA256(password);
         password = Util.SHA256(Buffer.concat([password, salt]));
 
-        var path = global.wallet.path + "\\" + name + "." + (network.startsWith("livenet") ? "dgb" : "dgbt");
+        var path = global.wallet.path + "\\\\" + name + "." + (network.startsWith("livenet") ? "dgb" : "dgbt");
 
         global.wallet.database = SQLite(path);
 
@@ -173,7 +185,7 @@ class Wallet {
                 xprv = Util.DecryptAES256(xprv, password);
                 password = undefined;
 
-                var hdPrivateKey = HDPrivateKey.fromString(xprv).derive("m/" + (global.wallet.type == "legacy" ? 44 : (global.wallet.type == "segwit" ? 84 : 49)) + "'/20'/0'").derive(change).derive(quantity);
+                var hdPrivateKey = HDPrivateKey.fromString(xprv).derive("m/" + (global.wallet.type == "legacy" ? 44 : (global.wallet.type == "segwit" ? 84 : 49)) + "'/" + (global.wallet.network.startsWith('testnet') ? 1 : 20) + "'/0'").derive(change).derive(quantity);
                 WIF = hdPrivateKey.privateKey.toWIF();
                 var address = new Address(hdPrivateKey.hdPublicKey.publicKey, global.wallet.network, global.wallet.type).toString();
                 
@@ -195,12 +207,104 @@ class Wallet {
 
         return { address, WIF };
     }
+    static async Send(address, amount, data, payload) {
+        if (!global.wallet.database) {
+            Console.Log("No wallet open!");
+            return;
+        }
+
+        var balance = await Wallet.Sync();
+        if(balance) Console.Log("Available balance: " + balance.confirmed);
+
+        if (!address) address = Console.ReadLine("Recipient address");
+        if (!amount) amount = Console.ReadLine("Amount");
+        if (!data && payload)
+            data = Console.ReadLine("Extra data");
+        else
+            data = "";
+
+        var utxos = global.wallet.database.prepare("SELECT * FROM UTXOs WHERE height != 0 ORDER BY satoshis, height").all();
+
+        if (amount != 'all') {
+            var satoshis = amount = Unit.fromDGB(amount).toSatoshis();
+            
+            var inputs = [];
+            for (var i = 0; i < utxos.length; i++) {
+                inputs.push(utxos[i]);
+                satoshis -= utxos[i].satoshis;
+
+                var one = -(satoshis + Wallet.TxSize(inputs.length, 1, data.length));
+                var two = -(satoshis + Wallet.TxSize(inputs.length, 2, data.length));
+
+                if (one == 0) {
+                    var fee = Wallet.TxSize(inputs.length, 1, data.length);
+                    break;
+                }
+                else if (two > 500) {
+                    var fee = Wallet.TxSize(inputs.length, 2, data.length);
+                    var change = Wallet.GenerateAddress("","","",undefined,false,true,false,'change').address;
+                    break;
+                }
+            }
+        } else {
+            var inputs = utxos;
+            amount = 0;
+            
+            for (var i = 0; i < inputs.length; i++) { 
+                amount += inputs[i].satoshis;
+            }
+            var fee = Wallet.TxSize(inputs.length, 1, data.length);
+
+            amount -= fee
+            if (amount < 500)
+                fee = undefined;
+        }
+
+
+        if (!fee) {
+            Console.Log("Unsuficient funds!");
+            return;
+        }
+        
+        var password = Console.ReadPassword("Password");
+        if(!Wallet.CheckPassword(password)) {
+            Console.Log("Wrong password");
+            return;
+        }
+        var xprv = global.wallet.database.prepare("SELECT value FROM Data WHERE key = ?").get(['xprv']).value;
+        var xprv = Util.DecryptAES256(xprv, password);
+        var xprv = HDPrivateKey.fromString(xprv);
+
+        var privateKeys = [];
+        for (var i = 0; i < inputs.length; i++) {
+            var wif = xprv.derive(inputs[i].path).privateKey.toWIF();
+            if (privateKeys.indexOf(wif) == -1)
+                privateKeys.push(wif);
+        }
+
+        var tx = new Transaction();
+        tx.from(inputs);
+        tx.to(address.trim(), amount);
+        tx.fee(fee);
+        if (change) tx.change(change);
+        tx.sign(privateKeys);
+        
+        var hex = tx.serialize(true);
+        
+        var server = 'digibyteblockexplorer.com';
+        if (global.wallet.network.startsWith('testnet'))
+            server = 'testnetexplorer.digibyteservers.io';
+
+        var data = await Util.FetchData('https://' + server + '/api/sendtx/' + hex);
+
+        return data;
+    }
     static async Sync() {
         if (!global.wallet.database) {
             Console.Log("No wallet open!");
             return;
         }
-        var server = 'digiexplorer.info';
+        var server = 'digibyteblockexplorer.com';
         if (global.wallet.network.startsWith('testnet'))
             server = 'testnetexplorer.digibyteservers.io';
 
@@ -212,10 +316,14 @@ class Wallet {
         for (var i = 0; i < data.length; i++) {
             var utxo = data[i];
 
-            var address = Address.fromString(utxo.address);
-            var script = Script.buildPublicKeyHashOut(address);
-            script = script.toHex();
-            |
+            if (!utxo.scriptPubKey) {
+                var address = Address.fromString(utxo.address);
+                var script = Script.buildPublicKeyHashOut(address);
+                script = script.toHex();
+            } else {
+                var script = utxo.scriptPubKey;
+            }
+
             query.run([utxo.txid,utxo.vout,utxo.value,utxo.height || 0,script,utxo.address,utxo.path])
             
             if (utxo.confirmations > 0)
@@ -245,6 +353,14 @@ class Wallet {
 
         return (Buffer.compare(passwordUser, passwordDB) == 0);
     }
+    static TxSize(inputs, outputs, data) {
+        if (data != 0) outputs++;
+        return inputs*180 + outputs*34 + 10 +inputs + data;
+    }
 }
 
 module.exports = Wallet;
+
+
+// 76a91421bfc0a4f57eddca1e6c6063c1ac90d49f70f5cb88ac
+//   001421bfc0a4f57eddca1e6c6063c1ac90d49f70f5cb
