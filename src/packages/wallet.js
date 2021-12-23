@@ -12,6 +12,7 @@ const Script = DigiByte.Script;
 const SQLite = require('better-sqlite3');
 const Console = require('./console');
 const Util = require('./util');
+const BlockChain = require('./blockchain');
 
 class Wallet {
     static Logo() {
@@ -93,7 +94,6 @@ class Wallet {
         global.wallet.database = SQLite(path);
 
         global.wallet.database.prepare("CREATE TABLE Addresses( address TEXT NOT NULL UNIQUE, label TEXT NOT NULL, change INTEGER NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (address))").run();
-        global.wallet.database.prepare("CREATE TABLE UTXOs(txid TEXT NOT NULL, vout INTEGER NOT NULL, satoshis INTEGER NOT NULL, height INTEGER NOT NULL, script TEXT NOT NULL, address TEXT NOT NULL, path TEXT NOT NULL, PRIMARY KEY (txid, vout))").run();
         global.wallet.database.prepare("CREATE TABLE Data(key TEXT NOT NULL UNIQUE, value TEXT NOT NULL)").run();
         
         var data = global.wallet.database.prepare("INSERT INTO Data (key, value) VALUES (?,?)")
@@ -133,6 +133,7 @@ class Wallet {
         global.wallet.type = query.get('type').value;
         global.wallet.name = query.get('name').value;
         global.wallet.xpub = Util.DecryptAES256(query.get('xpub').value, password);
+        global.wallet.symbol = global.wallet.network.startsWith('livenet') ? 'DGB' : 'DGBT';
         
         password = undefined;
     }
@@ -148,20 +149,22 @@ class Wallet {
         global.wallet.name = undefined;
         global.wallet.xpub = undefined;
     }
-    static GenerateAddress(label, WIF, password, type, reveal, nolabel, random, change = 'normal') { 
+    static GenerateAddress(label, WIF, password, type, reveal, nolabel, random, testnet, change = 'normal') { 
         
+        var network = testnet ? 'testnet' : 'livenet'
+
         if (random) {
             var type = type || global.wallet.type;
             var privateKey = new PrivateKey();
             var WIF = privateKey.toWIF();
-            var address = privateKey.toAddress(type).toString();
-            return {WIF, address};
+            var address = privateKey.toAddress(type, network).toString();
+            return { WIF, address };
         }
         
         if (!WIF) {
             if (!global.wallet.database) {
                 Console.Log("No wallet open!");
-                return;
+                return {};
             }
 
             if (!label && !nolabel) label = Console.ReadLine("Label");
@@ -201,20 +204,38 @@ class Wallet {
                 Console.Log("For native and segwit addreses you must use compressed keys");
                 return {};
             }
-            var address = privateKey.toAddress(type).toString();
+            var address = privateKey.toAddress(type, network).toString();
             if (!reveal) WIF = undefined;
         }
 
         return { address, WIF };
     }
-    static async Send(address, amount, data, payload) {
+    static async Balance() {
+        if (!global.wallet.database) {
+            Console.Log("No wallet open!");
+            return {};
+        }
+        var data = await BlockChain.xpub(global.wallet.xpub, global.wallet.network);
+        return data;
+    }
+    static xpub() {
         if (!global.wallet.database) {
             Console.Log("No wallet open!");
             return;
         }
+        return global.wallet.xpub;
+    }
+    static async Send(address, amount, data, payload) {
+        if (!global.wallet.database) {
+            Console.Log("No wallet open!");
+            return { };
+        }
 
-        var balance = await Wallet.Sync();
-        if(balance) Console.Log("Available balance: " + balance.confirmed);
+        var utxos = await BlockChain.utxos(global.wallet.xpub, global.wallet.network);
+
+        var balance = 0;
+        utxos.forEach(utxo => {balance += utxo.satoshis})
+        Console.Log("Available balance: " + Unit.fromSatoshis(balance).toDGB() + ' ' + global.wallet.symbol);
 
         if (!address) address = Console.ReadLine("Recipient address");
         if (!amount) amount = Console.ReadLine("Amount");
@@ -222,8 +243,6 @@ class Wallet {
             data = Console.ReadLine("Extra data");
         else
             data = "";
-
-        var utxos = global.wallet.database.prepare("SELECT * FROM UTXOs WHERE height != 0 ORDER BY satoshis, height").all();
 
         if (amount != 'all') {
             var satoshis = amount = Unit.fromDGB(amount).toSatoshis();
@@ -240,9 +259,9 @@ class Wallet {
                     var fee = Wallet.TxSize(inputs.length, 1, data.length);
                     break;
                 }
-                else if (two > 500) {
+                else if (two >= 546) {
                     var fee = Wallet.TxSize(inputs.length, 2, data.length);
-                    var change = Wallet.GenerateAddress("","","",undefined,false,true,false,'change').address;
+                    var change = Wallet.GenerateAddress("","","",undefined,false,true,false,global.wallet.network.startsWith('testnet'),'change').address;
                     break;
                 }
             }
@@ -256,20 +275,20 @@ class Wallet {
             var fee = Wallet.TxSize(inputs.length, 1, data.length);
 
             amount -= fee
-            if (amount < 500)
+            if (amount <= 546)
                 fee = undefined;
         }
 
 
         if (!fee) {
             Console.Log("Unsuficient funds!");
-            return;
+            return { };
         }
         
         var password = Console.ReadPassword("Password");
         if(!Wallet.CheckPassword(password)) {
             Console.Log("Wrong password");
-            return;
+            return { };
         }
         var xprv = global.wallet.database.prepare("SELECT value FROM Data WHERE key = ?").get(['xprv']).value;
         var xprv = Util.DecryptAES256(xprv, password);
@@ -299,50 +318,6 @@ class Wallet {
 
         return data;
     }
-    static async Sync() {
-        if (!global.wallet.database) {
-            Console.Log("No wallet open!");
-            return;
-        }
-        var server = 'digibyteblockexplorer.com';
-        if (global.wallet.network.startsWith('testnet'))
-            server = 'testnetexplorer.digibyteservers.io';
-
-        var data = await Util.FetchData('https://' + server + '/api/v2/utxo/' + global.wallet.xpub + '?details=tokenBalances');
-        global.wallet.database.prepare("DELETE FROM UTXOs").run();
-        var query = global.wallet.database.prepare("INSERT INTO UTXOs (txid,vout,satoshis,height,script,address,path) VALUES (?,?,?,?,?,?,?)");
-        var confirmed = 0;
-        var unconfirmed = 0;
-        for (var i = 0; i < data.length; i++) {
-            var utxo = data[i];
-
-            if (!utxo.scriptPubKey) {
-                var address = Address.fromString(utxo.address);
-                var script = Script.buildPublicKeyHashOut(address);
-                script = script.toHex();
-            } else {
-                var script = utxo.scriptPubKey;
-            }
-
-            query.run([utxo.txid,utxo.vout,utxo.value,utxo.height || 0,script,utxo.address,utxo.path])
-            
-            if (utxo.confirmations > 0)
-                confirmed += parseInt(utxo.value);
-            else
-                unconfirmed += parseInt(utxo.value);
-        }
-        return {
-            confirmed: Unit.fromSatoshis(confirmed).toDGB().toFixed(8), 
-            unconfirmed: Unit.fromSatoshis(unconfirmed).toDGB().toFixed(8)
-        };
-    }
-    static xpub() {
-        if (!global.wallet.database) {
-            Console.Log("No wallet open!");
-            return;
-        }
-        return global.wallet.xpub;
-    }
 
     static CheckPassword(password) {
         var query = global.wallet.database.prepare("SELECT value FROM Data WHERE key = ?");
@@ -360,7 +335,3 @@ class Wallet {
 }
 
 module.exports = Wallet;
-
-
-// 76a91421bfc0a4f57eddca1e6c6063c1ac90d49f70f5cb88ac
-//   001421bfc0a4f57eddca1e6c6063c1ac90d49f70f5cb

@@ -7,18 +7,6 @@ CREATE TABLE Addresses (
 	PRIMARY KEY (address)
 );
 
-CREATE TABLE UTXOs (
-	txid		TEXT	NOT NULL,
-	vout		INTEGER	NOT NULL,
-	satoshis	INTEGER	NOT NULL,
-	height		INTEGER NOT NULL,
-	script		TEXT	NOT NULL,
-    address     TEXT	NOT NULL,
-	path		TEXT	NOT NULL,
-
-	PRIMARY KEY (txid, vout)
-);
-
 CREATE TABLE Data (
 	Key		TEXT	NOT NULL	UNIQUE,
 	Value	TEXT	NOT NULL

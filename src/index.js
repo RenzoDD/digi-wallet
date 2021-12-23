@@ -13,25 +13,26 @@
         var cmd = Console.ReadCommand(global.wallet.name);
         
         switch (cmd.command) {
-            case 'createwallet':
+            case 'create':
                 var path = Wallet.CreateWallet(cmd.arguments.name, cmd.arguments.password, cmd.arguments.entropy, cmd.arguments.type, cmd.flags.testnet, cmd.flags.nobackup, cmd.flags.noentropy);
                 Console.Log("Wallet created! - " + path);
                 break;
-            case 'openwallet':
+            case 'open':
                 Wallet.OpenWallet(cmd.arguments.path, cmd.arguments.password);
                 Console.Log("Wallet opened!");
                 break;
             case 'balance':
-                var balance = await Wallet.Sync();
-                if(balance) Console.Log("Confirmed balance: " + balance.confirmed);
-                if(balance) Console.Log("Unconfirmed balance: " + balance.unconfirmed);
+                var info = await Wallet.Balance();
+                if (info.confirmed) Console.Log("Confirmed: " + info.confirmed + ' ' + global.wallet.symbol);
+                if (info.unconfirmed) Console.Log("Unconfirmed: " + info.unconfirmed + ' ' + global.wallet.symbol);
+                if (info.apperances) Console.Log("Transactions: " + info.apperances);
                 break;
-            case 'closewallet':
+            case 'close':
                 Wallet.CloseWallet();
                 Console.Log("Wallet closed!");
                 break;
-            case 'generateaddress':
-                var pair = Wallet.GenerateAddress(cmd.arguments.label, cmd.arguments.WIF, cmd.arguments.password, cmd.arguments.type, cmd.flags.reveal, cmd.flags.nolabel, cmd.flags.random);
+            case 'address':
+                var pair = Wallet.GenerateAddress(cmd.arguments.label, cmd.arguments.WIF, cmd.arguments.password, cmd.arguments.type, cmd.flags.reveal, cmd.flags.nolabel, cmd.flags.random, cmd.flags.testnet);
                 if (pair.address) Console.Log("Address: " + pair.address);
                 if (pair.WIF) Console.Log("WIF: " + pair.WIF);
                 break;
