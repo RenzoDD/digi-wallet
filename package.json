@@ -10,9 +10,7 @@
     "build": "pkg . --compress Brotli"
   },
   "pkg": {
-    "assets": [
-      "/node_modules/better-sqlite3/build/Release/better_sqlite3.node"
-    ],
+    "assets": [],
     "targets": [
       "node14-win-x64"
     ],
@@ -35,7 +33,6 @@
   "homepage": "https://github.com/RenzoDD/digibyte-wallet#readme",
   "dependencies": {
     "axios": "^0.24.0",
-    "better-sqlite3": "^7.4.5",
     "digibyte-js": "^1.1.3",
     "readline-sync": "^1.4.10"
   }

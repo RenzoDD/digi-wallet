@@ -3,7 +3,7 @@ const reader = require('readline-sync');
 class Console
 {
     static ReadCommand() {
-        var cmd = !global.wallet.name ? "digibyte-wallet" : global.wallet.name;
+        var cmd = !global.wallet.storage ? "digibyte-wallet" : global.wallet.storage.name;
     
         var obj = {
             command: "",
@@ -31,24 +31,24 @@ class Console
         return obj;
     }
     static ReadLine(text) {
-        var cmd = !global.wallet.name ? "digibyte-wallet" : global.wallet.name;
+        var cmd = !global.wallet.storage ? "digibyte-wallet" : global.wallet.storage.name;
         var data = reader.question(cmd + " > " + text + ": ");
         return data;
     }
     static ReadPassword(text) {
-        var cmd = !global.wallet.name ? "digibyte-wallet" : global.wallet.name;
+        var cmd = !global.wallet.storage ? "digibyte-wallet" : global.wallet.storage.name;
         var data = reader.question(cmd + " > " + text + ": ", { hideEchoBack: true });
         return data;
     }
     static Log(text) {
-        var cmd = !global.wallet.name ? "digibyte-wallet" : global.wallet.name;
+        var cmd = !global.wallet.storage ? "digibyte-wallet" : global.wallet.storage.name;
         console.log(cmd + " > " + text);
     }
     static Clear() {
         console.clear();
     }
     static Pause() {
-        var cmd = !global.wallet.name ? "digibyte-wallet" : global.wallet.name;
+        var cmd = !global.wallet.storage ? "digibyte-wallet" : global.wallet.storage.name;
         reader.keyIn(cmd + " > Press any key to continue...");
     }
 }

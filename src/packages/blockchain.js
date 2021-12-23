@@ -1,3 +1,4 @@
+const { Address, Script } = require('digibyte-js');
 const Util = require('./util');
 
 class BlockChain {
@@ -15,12 +16,14 @@ class BlockChain {
                 satoshis: parseInt(data[i].value),
                 height: data[i].height || 0,
                 path: data[i].path,
-                script: data[i].scriptPubKey
+                script: data[i].scriptPubKey,
+                address: data[i].address
             };
 
             if (!utxo.script) {
                 var address = Address.fromString(utxo.address);
-                var script = Script.buildPublicKeyHashOut(address);
+                var script = Script.fromAddress(address);
+                    
                 utxo.script = script.toHex();
             }
 

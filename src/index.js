@@ -1,6 +1,5 @@
 (async function() {
     global.wallet = {}
-    global.wallet.path = process.cwd();
     global.wallet.name = null;
     global.wallet.database = null;
     global.wallet.xpub = null;
@@ -23,8 +22,8 @@
                 break;
             case 'balance':
                 var info = await Wallet.Balance();
-                if (info.confirmed) Console.Log("Confirmed: " + info.confirmed + ' ' + global.wallet.symbol);
-                if (info.unconfirmed) Console.Log("Unconfirmed: " + info.unconfirmed + ' ' + global.wallet.symbol);
+                if (info.confirmed) Console.Log("Confirmed: " + info.confirmed + ' ' + global.wallet.storage.symbol);
+                if (info.unconfirmed) Console.Log("Unconfirmed: " + info.unconfirmed + ' ' + global.wallet.storage.symbol);
                 if (info.apperances) Console.Log("Transactions: " + info.apperances);
                 break;
             case 'close':
@@ -32,7 +31,7 @@
                 Console.Log("Wallet closed!");
                 break;
             case 'address':
-                var pair = Wallet.GenerateAddress(cmd.arguments.label, cmd.arguments.WIF, cmd.arguments.password, cmd.arguments.type, cmd.flags.reveal, cmd.flags.nolabel, cmd.flags.random, cmd.flags.testnet);
+                var pair = Wallet.GenerateAddress(false, cmd.arguments.password, cmd.arguments.WIF, cmd.arguments.type, cmd.flags.reveal, cmd.flags.random, cmd.flags.testnet);
                 if (pair.address) Console.Log("Address: " + pair.address);
                 if (pair.WIF) Console.Log("WIF: " + pair.WIF);
                 break;

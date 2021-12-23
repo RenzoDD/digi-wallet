@@ -9,7 +9,7 @@ const Unit = DigiByte.Unit;
 const Transaction = DigiByte.Transaction;
 const Script = DigiByte.Script;
 
-const SQLite = require('better-sqlite3');
+const Storage = require('./storage');
 const Console = require('./console');
 const Util = require('./util');
 const BlockChain = require('./blockchain');
@@ -37,6 +37,8 @@ class Wallet {
 
         var network = !testnet ? "livenet" : "testnet";
         if (type != 'legacy') network += "-" + type;
+
+        var symbol = !testnet ? "DGB" : "DGBT";
 
         if (!password) {
             var password = Console.ReadPassword("Create password");
@@ -73,14 +75,13 @@ class Wallet {
             Console.Pause();
         }
 
+        var derivation = "m/" + (type == "legacy" ? 44 : (type == "segwit" ? 84 : 49)) + "'/" + (network.startsWith('testnet') ? 1 : 20) + "'/0'";
         var seed = BIP39.MnemonicToSeed(mnemonic);
         var xprv = HDPrivateKey.fromSeed(seed, network);
         var xpub = xprv.derive("m/" + (type == "legacy" ? 44 : (type == "segwit" ? 84 : 49)) + "'/" + (testnet ? 1 : 20) + "'/0'").hdPublicKey.toString();
 
         xprv = xprv.toString();
 
-        global.wallet.network = network;
-        global.wallet.type = type;
         global.wallet.xpub = xpub;
 
         xprv = Util.EncryptAES256(xprv, password);
@@ -89,27 +90,27 @@ class Wallet {
         password = Util.SHA256(password);
         password = Util.SHA256(Buffer.concat([password, salt]));
 
-        var path = global.wallet.path + "\\\\" + name + "." + (network.startsWith("livenet") ? "dgb" : "dgbt");
+        global.wallet.path = process.cwd() + "\\" + name + "." + (network.startsWith("livenet") ? "dgb" : "dgbt");
 
-        global.wallet.database = SQLite(path);
+        global.wallet.storage = {
+            password,
+            salt,
+            xprv,
+            xpub,
+            type,
+            network,
+            name,
+            derivation,
+            symbol,
+            change: 0,
+            index: 0
+        }
 
-        global.wallet.database.prepare("CREATE TABLE Addresses( address TEXT NOT NULL UNIQUE, label TEXT NOT NULL, change INTEGER NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (address))").run();
-        global.wallet.database.prepare("CREATE TABLE Data(key TEXT NOT NULL UNIQUE, value TEXT NOT NULL)").run();
-        
-        var data = global.wallet.database.prepare("INSERT INTO Data (key, value) VALUES (?,?)")
-        data.run(["password", password]);
-        data.run(["salt", salt]);
-        data.run(["xprv", xprv]);
-        data.run(["xpub", xpub]);
-        data.run(["type", type]);
-        data.run(["network", network]);
-        data.run(["name", name]);
+        Storage.Save(global.wallet.path, global.wallet.storage);
 
         salt = xprv = xpub = type = network = null;
 
-        global.wallet.name = name;
-
-        return path;
+        return global.wallet.path;
     }
     static OpenWallet(path, password) {
         if (!path) path = Console.ReadLine("Enter file path");
@@ -120,89 +121,83 @@ class Wallet {
             return;
         }
 
-        global.wallet.database = SQLite(path);
+        global.wallet.storage = Storage.Open(path);
         if (!Wallet.CheckPassword(password)){
             Console.Log('Invalid password');
-            global.wallet.database.close();
+            global.wallet.storage = undefined;
             password = undefined;
             return;
         }
 
-        var query = global.wallet.database.prepare("SELECT value FROM Data WHERE key = ?");
-        global.wallet.network = query.get('network').value;
-        global.wallet.type = query.get('type').value;
-        global.wallet.name = query.get('name').value;
-        global.wallet.xpub = Util.DecryptAES256(query.get('xpub').value, password);
-        global.wallet.symbol = global.wallet.network.startsWith('livenet') ? 'DGB' : 'DGBT';
+        global.wallet.xpub = Util.DecryptAES256(global.wallet.storage.xpub, password);
+        global.wallet.path = path;
         
         password = undefined;
     }
     static CloseWallet() {
-        if (!global.wallet.database) {
+        if (!global.wallet.storage) {
             Console.Log("No wallet open!");
             return;
         }
         
-        global.wallet.database.close();
-        global.wallet.network = undefined;
-        global.wallet.type = undefined;
-        global.wallet.name = undefined;
+        global.wallet.storage = undefined;
         global.wallet.xpub = undefined;
+        global.wallet.path = undefined;
     }
-    static GenerateAddress(label, WIF, password, type, reveal, nolabel, random, testnet, change = 'normal') { 
+    static GenerateAddress(change, password, WIF, type, reveal, random, testnet) { 
         
         var network = testnet ? 'testnet' : 'livenet'
 
         if (random) {
-            var type = type || global.wallet.type;
-            var privateKey = new PrivateKey();
+            var type = type || 'segwit';
+            var privateKey = new PrivateKey(undefined, network);
             var WIF = privateKey.toWIF();
             var address = privateKey.toAddress(type, network).toString();
             return { WIF, address };
         }
         
         if (!WIF) {
-            if (!global.wallet.database) {
+            if (!global.wallet.storage) {
                 Console.Log("No wallet open!");
                 return {};
             }
 
-            if (!label && !nolabel) label = Console.ReadLine("Label");
-            if (nolabel) label = "";
-
-            change = change == 'change' ? 1 : 0;
-            var quantity = global.wallet.database.prepare("SELECT COUNT(*) AS quantity FROM Addresses WHERE change == ?").get([change]).quantity;
-
+            var quantity = change ? global.wallet.storage.change : global.wallet.storage.index;
+            
             if (!reveal) {
-                var hdPublicKey = HDPublicKey.fromString(global.wallet.xpub).derive(change).derive(quantity);
-                var address = new Address(hdPublicKey.publicKey, global.wallet.network, global.wallet.type).toString();
+                var hdPublicKey = HDPublicKey.fromString(global.wallet.xpub).derive(change ? 1 : 0).derive(quantity);
+                var address = new Address(hdPublicKey.publicKey, global.wallet.storage.network, global.wallet.storage.type).toString();
                 WIF = undefined;
             } else {
                 if (!password) password = Console.ReadPassword("Password");
                 if (!Wallet.CheckPassword(password)) {
                     Console.Log("Incorrect password");
                     password = undefined;
-                    return;
+                    return { };
                 }
-                var xprv = global.wallet.database.prepare("SELECT value FROM Data WHERE key = ?").get(['xprv']).value;
+                var xprv = global.wallet.storage.xprv;
                 xprv = Util.DecryptAES256(xprv, password);
                 password = undefined;
 
-                var hdPrivateKey = HDPrivateKey.fromString(xprv).derive("m/" + (global.wallet.type == "legacy" ? 44 : (global.wallet.type == "segwit" ? 84 : 49)) + "'/" + (global.wallet.network.startsWith('testnet') ? 1 : 20) + "'/0'").derive(change).derive(quantity);
-                WIF = hdPrivateKey.privateKey.toWIF();
-                var address = new Address(hdPrivateKey.hdPublicKey.publicKey, global.wallet.network, global.wallet.type).toString();
-                
+                var hdPrivateKey = HDPrivateKey.fromString(xprv).derive(global.wallet.storage.derivation).derive(change ? 1 : 0).derive(quantity);
                 xprv = undefined;
+                WIF = hdPrivateKey.privateKey.toWIF();
+                var address = new Address(hdPrivateKey.hdPublicKey.publicKey, global.wallet.storage.network, global.wallet.storage.type).toString();
             }
 
-            global.wallet.database.prepare("INSERT INTO Addresses (address, label, change, n) VALUES (?,?,?,?)").run([address,label,change, quantity]);
+            if (!change)
+                global.wallet.storage.index++;
+            else
+                global.wallet.storage.change++;
+
+            Storage.Save(global.wallet.path, global.wallet.storage);
         } else {
-            var type = type || global.wallet.type;
+            var type = type || 'segwit';
             var privateKey = new PrivateKey(WIF);
             var publicKey = new PublicKey(privateKey);
             if (!publicKey.compressed && (type == 'native' || type == 'segwit')) {
                 Console.Log("For native and segwit addreses you must use compressed keys");
-                return {};
+                return { };
             }
             var address = privateKey.toAddress(type, network).toString();
             if (!reveal) WIF = undefined;
@@ -211,31 +206,31 @@ class Wallet {
         return { address, WIF };
     }
     static async Balance() {
-        if (!global.wallet.database) {
+        if (!global.wallet.storage) {
             Console.Log("No wallet open!");
             return {};
         }
-        var data = await BlockChain.xpub(global.wallet.xpub, global.wallet.network);
+        var data = await BlockChain.xpub(global.wallet.xpub, global.wallet.storage.network);
         return data;
     }
     static xpub() {
-        if (!global.wallet.database) {
+        if (!global.wallet.storage) {
             Console.Log("No wallet open!");
             return;
         }
         return global.wallet.xpub;
     }
     static async Send(address, amount, data, payload) {
-        if (!global.wallet.database) {
+        if (!global.wallet.storage) {
             Console.Log("No wallet open!");
             return { };
         }
 
-        var utxos = await BlockChain.utxos(global.wallet.xpub, global.wallet.network);
+        var utxos = await BlockChain.utxos(global.wallet.xpub, global.wallet.storage.network);
 
         var balance = 0;
         utxos.forEach(utxo => {balance += utxo.satoshis})
-        Console.Log("Available balance: " + Unit.fromSatoshis(balance).toDGB() + ' ' + global.wallet.symbol);
+        Console.Log("Available balance: " + Unit.fromSatoshis(balance).toDGB() + ' ' + global.wallet.storage.symbol);
 
         if (!address) address = Console.ReadLine("Recipient address");
         if (!amount) amount = Console.ReadLine("Amount");
@@ -261,7 +256,7 @@ class Wallet {
                 }
                 else if (two >= 546) {
                     var fee = Wallet.TxSize(inputs.length, 2, data.length);
-                    var change = Wallet.GenerateAddress("","","",undefined,false,true,false,global.wallet.network.startsWith('testnet'),'change').address;
+                    var change = Wallet.GenerateAddress(true).address;
                     break;
                 }
             }
@@ -290,7 +285,7 @@ class Wallet {
             Console.Log("Wrong password");
             return { };
         }
-        var xprv = global.wallet.database.prepare("SELECT value FROM Data WHERE key = ?").get(['xprv']).value;
+        var xprv = global.wallet.storage.xprv;
         var xprv = Util.DecryptAES256(xprv, password);
         var xprv = HDPrivateKey.fromString(xprv);
 
@@ -311,7 +306,7 @@ class Wallet {
         var hex = tx.serialize(true);
         
         var server = 'digibyteblockexplorer.com';
-        if (global.wallet.network.startsWith('testnet'))
+        if (global.wallet.storage.network.startsWith('testnet'))
             server = 'testnetexplorer.digibyteservers.io';
 
         var data = await Util.FetchData('https://' + server + '/api/sendtx/' + hex);
@@ -320,9 +315,8 @@ class Wallet {
     }
 
     static CheckPassword(password) {
-        var query = global.wallet.database.prepare("SELECT value FROM Data WHERE key = ?");
-        var passwordDB = query.get(['password']).value;
-        var saltDB = query.get(['salt']).value;
+        var passwordDB = global.wallet.storage.password;
+        var saltDB = global.wallet.storage.salt;
 
         var passwordUser = Util.SHA256(Buffer.concat([Util.SHA256(password), saltDB]));
 
