@@ -1,6 +1,6 @@
 # Close Wallet
 
-To close a wallet you must use the `closewallet` command, it will close the wallet file.
+To close a wallet you must use the `close` command, it will close the current wallet file.
 
 ## Arguments
 
@@ -15,5 +15,5 @@ To close a wallet you must use the `closewallet` command, it will close the wall
 ## Examples
 
 ```
-My Wallet > closewallet
+my-Wallet > close
 ```

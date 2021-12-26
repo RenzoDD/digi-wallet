@@ -7,7 +7,7 @@
     const Console = require('./packages/console');
     const Wallet = require('./packages/wallet');
 
-    Wallet.Logo();
+    Console.Logo();
     while(true) {
         var cmd = Console.ReadCommand(global.wallet.name);
         
@@ -42,11 +42,11 @@
             case 'send':
                 var data = await Wallet.Send(cmd.arguments.address, cmd.arguments.value, cmd.arguments.data, cmd.flags.payload);
                 if(data.error) Console.Log("Error: " + data.error);
-                else Console.Log("TXID: " + data.result);
+                if(data.result) Console.Log("TXID: " + data.result);
                 break;
             case 'clear': case 'cls':
                 Console.Clear();
-                Wallet.Logo();
+                Console.Logo();
                 break;
             case 'exit':
                 return;

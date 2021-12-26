@@ -1,6 +1,6 @@
 # Create Wallet
 
-To create a wallet you must use the `createwallet` command, with the `-name`, `-password`, `-entropy` arguments. By default it will generate segwit addresses in the livenet network.
+To create a wallet you must use the `create` command, with the `-name`, `-password`, `-entropy` arguments. By default it will generate a segwit wallet in the livenet network.
 
 ## Arguments
 

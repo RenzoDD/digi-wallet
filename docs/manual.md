@@ -14,10 +14,10 @@ The available commands are listed in the [commands](commands.md) file.
 
 ## Arguments
 
-After typing the command, in some cases you will need to provide additional information in the form of arguments. To enter an argument, you will first need to place its indicator, which is denoted by a dash and one or more letters `-a`. Immediately after, the value that will contain `argument-value`. The entered value may not contain spaces and should not be enclosed in quotation marks or similar characters.
+After typing the command, in some cases you will need to provide additional information in the form of arguments. To enter an argument, you will first need to place its indicator, which is denoted by a dash and one or more letters `-argument`. Immediately after, the value that will contain `value`. The entered value may not contain spaces and should not be enclosed in quotation marks or similar characters.
 
 ```
-digibyte-wallet > command -a argument-value
+digibyte-wallet > command -argument value
 ```
 
 The arguments that each command needs will be listed in the individual command file.

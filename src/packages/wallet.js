@@ -15,17 +15,6 @@ const Util = require('./util');
 const BlockChain = require('./blockchain');
 
 class Wallet {
-    static Logo() {
-        console.log("\x1b[40m\x1b[34m"," _____   _       _ ______                  ");
-        console.log("\x1b[40m\x1b[34m","(____ \\ (_)     (_|____  \\       _         ");
-        console.log("\x1b[40m\x1b[34m"," _   \\ \\ _  ____ _ ____)  )_   _| |_  ____ ");
-        console.log("\x1b[40m\x1b[34m","| |   | | |/ _  | |  __  (| | | |  _)/ _  )");
-        console.log("\x1b[40m\x1b[34m","| |__/ /| ( ( | | | |__)  ) |_| | |_( (/ / ");
-        console.log("\x1b[40m\x1b[34m","|_____/ |_|\\_|| |_|______/ \\__  |\\___)____)");
-        console.log("\x1b[40m\x1b[34m","          (_____|         (____/           ");
-        console.log("\x1b[40m\x1b[36m","             By Renzo Diaz & DigiFaucet.org");
-        console.log("\x1b[40m\x1b[37m");
-    }
     static CreateWallet(name, password, entropy, type, testnet, nobackup, noentropy) {
         if (!name) {
             name = Console.ReadLine("Name (default)");
@@ -58,6 +47,7 @@ class Wallet {
             var words = mnemonic.split(" ");
             for (var i = 1; i <= 12; i++) {
                 Console.Clear();
+                Console.Logo();
                 Console.Log("Word " + i + ": " + words[i - 1]);
                 Console.Pause();
             }
@@ -66,11 +56,14 @@ class Wallet {
             for (var i = 1; i <= 3; i++) {
                 var n = Math.floor(Math.random() * 12);
                 do {
+                    Console.Clear();
+                    Console.Logo();
                     var answer = Console.ReadLine("Enter word N " + (n + 1));
                 } while (answer != words[n]);
             }
 
             Console.Clear();
+            Console.Logo();
             Console.Log("All done, NEVER share this words or you will lose your coins");
             Console.Pause();
         }
@@ -114,18 +107,19 @@ class Wallet {
     }
     static OpenWallet(path, password) {
         if (!path) path = Console.ReadLine("Enter file path");
-        if (!password) password = Console.ReadPassword("Password");
 
         if(!Util.FileExist(path)) {
             Console.Log("The file doesn't exist!");
             return;
         }
 
+        if (!password) password = Console.ReadPassword("Password");
+        
         global.wallet.storage = Storage.Open(path);
         if (!Wallet.CheckPassword(password)){
-            Console.Log('Invalid password');
             global.wallet.storage = undefined;
             password = undefined;
+            Console.Log('Invalid password');
             return;
         }
 
@@ -232,7 +226,14 @@ class Wallet {
         utxos.forEach(utxo => {balance += utxo.satoshis})
         Console.Log("Available balance: " + Unit.fromSatoshis(balance).toDGB() + ' ' + global.wallet.storage.symbol);
 
-        if (!address) address = Console.ReadLine("Recipient address");
+        if (!address) address = Console.ReadLine("Pay to");
+
+        
+        if (!Address.isValid(address)) {
+            Console.Log("Invalid address!");
+            return { };
+        }
+
         if (!amount) amount = Console.ReadLine("Amount");
         if (!data && payload)
             data = Console.ReadLine("Extra data");
@@ -301,6 +302,7 @@ class Wallet {
         tx.to(address.trim(), amount);
         tx.fee(fee);
         if (change) tx.change(change);
+        if (data != "") tx.addData(data);
         tx.sign(privateKeys);
         
         var hex = tx.serialize(true);
@@ -313,7 +315,6 @@ class Wallet {
 
         return data;
     }
-
     static CheckPassword(password) {
         var passwordDB = global.wallet.storage.password;
         var saltDB = global.wallet.storage.salt;

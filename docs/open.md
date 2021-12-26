@@ -1,6 +1,6 @@
 # Open Wallet
 
-To open an existing wallet you must use the `openwallet` command, next to the `-path` and `-password` arguments.
+To open an existing wallet you must use the `open` command, next to the `-path` and `-password` arguments.
 
 ## Arguments
 
@@ -17,16 +17,16 @@ To open an existing wallet you must use the `openwallet` command, next to the `-
 ## Examples
 
 ```
-digibyte-wallet > openwallet -path D:\Docs\wallet\my_wallet.dgb -password dgb-rocks
+digibyte-wallet > open -path D:\docs\wallet\my_wallet.dgb -password dgb-rocks
 ```
 
 ```
-digibyte-wallet > openwallet -path D:\Docs\wallet\my_wallet.dgb
+digibyte-wallet > open -path D:\Docs\wallet\my_wallet.dgb
 digibyte-wallet > Password: *********
 ```
 
 ```
-digibyte-wallet > openwallet
-digibyte-wallet > Enter file path: D:\Docs\Path with spaces\my_wallet.dgb
+digibyte-wallet > open
+digibyte-wallet > Enter file path: D:\docs\Path with spaces\my_wallet.dgb
 digibyte-wallet > Password: *********
 ```
