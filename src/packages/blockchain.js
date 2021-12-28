@@ -36,6 +36,8 @@ class BlockChain {
         var server = network.startsWith('livenet') ? 'digibyteblockexplorer.com' : 'testnetexplorer.digibyteservers.io';
         var data = await Util.FetchData('https://' + server + '/api/xpub/' + xpub);
 
+        if (data.transactions)
+            data.transactions = data.transactions.reverse();
         return {
             confirmed: data.balance,
             unconfirmed: data.unconfirmedBalance,

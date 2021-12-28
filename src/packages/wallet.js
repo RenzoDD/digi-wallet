@@ -207,6 +207,14 @@ class Wallet {
         var data = await BlockChain.xpub(global.wallet.xpub, global.wallet.storage.network);
         return data;
     }
+    static async Transactions() {
+        if (!global.wallet.storage) {
+            Console.Log("No wallet open!");
+            return {};
+        }
+        var data = await BlockChain.xpub(global.wallet.xpub, global.wallet.storage.network);
+        return data.transactions || [];
+    }
     static xpub() {
         if (!global.wallet.storage) {
             Console.Log("No wallet open!");

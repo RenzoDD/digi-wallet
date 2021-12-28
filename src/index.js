@@ -35,6 +35,10 @@
                 if (pair.address) Console.Log("Address: " + pair.address);
                 if (pair.WIF) Console.Log("WIF: " + pair.WIF);
                 break;
+            case 'transactions':
+                var tx = await Wallet.Transactions();
+                tx.forEach(x => { Console.Log(x); });
+                break;
             case 'xpub':
                 var xpub = Wallet.xpub();
                 if(xpub) Console.Log(xpub);
