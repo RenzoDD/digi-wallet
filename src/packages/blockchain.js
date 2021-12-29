@@ -45,5 +45,23 @@ class BlockChain {
             transactions: data.transactions
         };
     }
+    static async tx(network, txid) {
+        var server = network.startsWith('livenet') ? 'digibyteblockexplorer.com' : 'testnetexplorer.digibyteservers.io';
+        var data = await Util.FetchData('https://' + server + '/api/tx/' + txid);
+        
+        return data;
+    }
+    static async address(network, address) {
+        var server = network.startsWith('livenet') ? 'digibyteblockexplorer.com' : 'testnetexplorer.digibyteservers.io';
+        var data = await Util.FetchData('https://' + server + '/api/address/' + address);
+        
+        return data;
+    }
+    static async api(network) {
+        var server = network.startsWith('livenet') ? 'digibyteblockexplorer.com' : 'testnetexplorer.digibyteservers.io';
+        var data = await Util.FetchData('https://' + server + '/api');
+        data.server = server;
+        return data;
+    }
 }
 module.exports = BlockChain;

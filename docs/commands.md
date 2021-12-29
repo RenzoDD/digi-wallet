@@ -77,3 +77,17 @@ my-wallet > TXID: dbfc1a9a5da03dc09b6d5abb3ed59022946d30f3e37b10ac0f467ac1488fef
 ```
 
 Find more information [here](send.md).
+
+## Search in blockchain
+
+Lookup an address or transaction in the blockchain
+
+```
+digibyte-wallet > explorer
+digibyte-wallet > Server:  digibyteblockexplorer.com
+digibyte-wallet > In sync: true
+digibyte-wallet > Height:  14263036
+digibyte-wallet > Mempool: 17
+```
+
+Find more information [here](explorer.md).

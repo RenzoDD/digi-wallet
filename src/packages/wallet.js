@@ -110,7 +110,7 @@ class Wallet {
 
         if(!Util.FileExist(path)) {
             Console.Log("The file doesn't exist!");
-            return;
+            return false;
         }
 
         if (!password) password = Console.ReadPassword("Password");
@@ -120,13 +120,15 @@ class Wallet {
             global.wallet.storage = undefined;
             password = undefined;
             Console.Log('Invalid password');
-            return;
+            return false;
         }
 
         global.wallet.xpub = Util.DecryptAES256(global.wallet.storage.xpub, password);
         global.wallet.path = path;
         
         password = undefined;
+
+        return true;
     }
     static CloseWallet() {
         if (!global.wallet.storage) {
@@ -214,6 +216,51 @@ class Wallet {
         }
         var data = await BlockChain.xpub(global.wallet.xpub, global.wallet.storage.network);
         return data.transactions || [];
+    }
+    static async Explorer(testnet, txid, address) {
+        var network = testnet ? 'testnet' : global.wallet.storage ? global.wallet.storage.network : 'livenet';
+        var symbol = network.startsWith("testnet") ? "DGBT" : "DGB";
+
+        if (txid) {
+            var data = await BlockChain.tx(network, txid);
+
+            if (data.error) {
+                Console.Log("Error: " + data.error);
+                return;
+            } 
+
+            Console.Log("DateTime: " + new Date(data.blocktime * 1000));
+            Console.Log("Confirmations: " + data.confirmations);
+            Console.Log("Input: " + data.valueIn);
+            for (var i = 0; i < data.vin.length; i++) {
+                Console.Log("  " + data.vin[i].addresses[0] + " " + data.vin[i].value + " " + symbol);
+            }
+            Console.Log("Output: " + data.valueOut);
+            for (var i = 0; i < data.vout.length; i++) {
+                Console.Log("  " + data.vout[i].scriptPubKey.addresses[0] + " " + data.vout[i].value + " " + symbol + (data.vout[i].spent ? " (spend)" : ""));
+            }
+            Console.Log("Fees: " + data.fees);
+            Console.Log("Size: " + (data.hex.length / 2) + " Bytes")
+        }
+        else if (address) {
+            var data = await BlockChain.address(network, address);
+
+            if (data.error) {
+                Console.Log("Error: " + data.error);
+                return;
+            } 
+
+            Console.Log("Total Received: " + data.totalReceived);
+            Console.Log("Total Sent:     " + data.totalSent);
+            Console.Log("Total Balance:  " + data.balance);
+            Console.Log("Tx Apperances:  " + data.txApperances);
+        } else {
+            var data = await BlockChain.api(network);
+            Console.Log("Server:  " + data.server);
+            Console.Log("In sync: " + data.blockbook.inSync);
+            Console.Log("Height:  " + data.backend.blocks);
+            Console.Log("Mempool: " + data.blockbook.mempoolSize);
+        }
     }
     static xpub() {
         if (!global.wallet.storage) {

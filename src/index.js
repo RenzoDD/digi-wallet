@@ -17,8 +17,8 @@
                 Console.Log("Wallet created! - " + path);
                 break;
             case 'open':
-                Wallet.OpenWallet(cmd.arguments.path, cmd.arguments.password);
-                Console.Log("Wallet opened!");
+                var result = Wallet.OpenWallet(cmd.arguments.path, cmd.arguments.password);
+                if (result) Console.Log("Wallet opened!");
                 break;
             case 'balance':
                 var info = await Wallet.Balance();
@@ -42,6 +42,9 @@
             case 'xpub':
                 var xpub = Wallet.xpub();
                 if(xpub) Console.Log(xpub);
+                break;
+            case 'explorer':
+                await Wallet.Explorer(cmd.flags.testnet, cmd.arguments.txid, cmd.arguments.address);
                 break;
             case 'send':
                 var data = await Wallet.Send(cmd.arguments.address, cmd.arguments.value, cmd.arguments.data, cmd.flags.payload);
