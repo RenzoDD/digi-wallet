@@ -51,6 +51,9 @@
                 if(data.error) Console.Log("Error: " + data.error);
                 if(data.result) Console.Log("TXID: " + data.result);
                 break;
+            case 'vanity':
+                Wallet.Vanity(cmd.arguments.pattern, cmd.arguments.type, cmd.flags.testnet, cmd.flags.hide);
+                break;
             case 'clear': case 'cls':
                 Console.Clear();
                 Console.Logo();

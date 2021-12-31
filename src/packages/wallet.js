@@ -201,6 +201,70 @@ class Wallet {
 
         return { address, WIF };
     }
+    static Vanity(pattern, type, testnet, hide) {
+        type = type ? type : 'legacy';
+        var network = testnet ? 'testnet' : 'livenet';
+        network = type != 'legacy' ? network + '-' + type : network;
+        
+        if (!pattern) pattern = Console.ReadLine("Pattern");
+
+        if (pattern.startsWith('%') && pattern.endsWith('%'))
+            var predicate = function (addr = '') { return addr.indexOf(pattern) != -1; };
+        else if (pattern.startsWith('%'))
+            var predicate = function (addr = '') { return addr.endsWith(pattern); };
+        else
+            var predicate = function (addr = '') { return addr.startsWith(pattern); };
+
+        pattern = pattern.replace('%', '');
+        pattern = pattern.replace('%', '');
+        
+        if (type == 'legacy' || type == 'native') {
+            var alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+            for (var i = 0; i < pattern.length; i++)
+                if (alphabet.indexOf(pattern[i]) == -1) {
+                    Console.Log("'" + pattern[i] + "' is not in the Base58 alphabet" );
+                    return;
+                }
+        } else {
+            var alphabet = '123456789abcdefghjklmnpqrstuvwxyz';
+            for (var i = 0; i < pattern.length; i++)
+                if (alphabet.indexOf(pattern[i]) == -1) {
+                    Console.Log("'" + pattern[i] + "' is not in the Bech32 alphabet" );
+                    return;
+                }
+        }
+            
+        var start = (new Date).getTime();
+        var cant = 0;
+        var secs = 0;
+
+        while (true)
+        {
+            var privateKey = new PrivateKey(null, network);
+            var address = privateKey.toAddress(type).toString();
+            cant++;
+            secs++;
+            if (!hide) {
+                var end = (new Date).getTime();
+                if (end - start > 1000) {
+                    Console.Clear();
+                    Console.Logo();
+                    Console.Log("Target: " + pattern);
+                    Console.Log("Last address: " + address);
+                    Console.Log(cant + ' addresses checked');
+                    Console.Log(Math.floor(secs) + ' / sec');
+                    start = end;
+                    secs = 0;
+                }
+            }
+
+            if (predicate(address))
+                break;
+        }
+
+        Console.Log('WIF: ' + privateKey.toWIF());
+        Console.Log('Address: ' + address);
+    }
     static async Balance() {
         if (!global.wallet.storage) {
             Console.Log("No wallet open!");
