@@ -38,6 +38,7 @@ class BlockChain {
 
         if (data.transactions)
             data.transactions = data.transactions.reverse();
+            
         return {
             confirmed: data.balance,
             unconfirmed: data.unconfirmedBalance,

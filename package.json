@@ -5,14 +5,16 @@
   "main": "src/index.js",
   "bin": "src/index.js",
   "scripts": {
-    "start": "cls && node src/index.js",
-    "test": "cls && node src/test.js",
+    "start": "node src/index.js",
+    "test": "node src/test.js",
     "build": "pkg . --compress Brotli"
   },
   "pkg": {
     "assets": [],
     "targets": [
-      "node14-win-x64"
+      "node14-win-x64",
+      "node14-mac-x64",
+      "node14-linux-x64"
     ],
     "outputPath": "./build"
   },

@@ -31,7 +31,6 @@ class Wallet {
 
         if (!password) {
             var password = Console.ReadPassword("Create password");
-            //password = (password == "") ? "password" : password;
         }
 
         var salt = Util.RandomBuffer();
@@ -103,14 +102,16 @@ class Wallet {
 
         salt = xprv = xpub = type = network = null;
 
-        return global.wallet.path;
+        return { 
+            success: 'Wallet created!',
+            path: global.wallet.path 
+        };
     }
     static OpenWallet(path, password) {
         if (!path) path = Console.ReadLine("Enter file path");
 
         if(!Util.FileExist(path)) {
-            Console.Log("The file doesn't exist!");
-            return false;
+            return { error: "The file doesn't exist!" };
         }
 
         if (!password) password = Console.ReadPassword("Password");
@@ -119,8 +120,7 @@ class Wallet {
         if (!Wallet.CheckPassword(password)){
             global.wallet.storage = undefined;
             password = undefined;
-            Console.Log('Invalid password');
-            return false;
+            return { error: "Invalid password!" };
         }
 
         global.wallet.xpub = Util.DecryptAES256(global.wallet.storage.xpub, password);
@@ -128,17 +128,17 @@ class Wallet {
         
         password = undefined;
 
-        return true;
+        return { success: 'Wallet opened!' };
     }
     static CloseWallet() {
-        if (!global.wallet.storage) {
-            Console.Log("No wallet open!");
-            return;
-        }
+        if (!global.wallet.storage)
+            return { error: 'No wallet open!' };
         
         global.wallet.storage = undefined;
         global.wallet.xpub = undefined;
         global.wallet.path = undefined;
+
+        return { success: 'Wallet closed!' };
     }
     static GenerateAddress(change, password, WIF, type, reveal, random, testnet) { 
         
@@ -149,14 +149,12 @@ class Wallet {
             var privateKey = new PrivateKey(undefined, network);
             var WIF = privateKey.toWIF();
             var address = privateKey.toAddress(type, network).toString();
-            return { WIF, address };
+            return { success: "Address created", WIF, address };
         }
         
         if (!WIF) {
-            if (!global.wallet.storage) {
-                Console.Log("No wallet open!");
-                return {};
-            }
+            if (!global.wallet.storage)
+                return { error: "No wallet open!" };
 
             var quantity = change ? global.wallet.storage.change : global.wallet.storage.index;
             
@@ -167,9 +165,8 @@ class Wallet {
             } else {
                 if (!password) password = Console.ReadPassword("Password");
                 if (!Wallet.CheckPassword(password)) {
-                    Console.Log("Incorrect password");
                     password = undefined;
-                    return { };
+                    return { error: "Incorrect password!" };
                 }
                 var xprv = global.wallet.storage.xprv;
                 xprv = Util.DecryptAES256(xprv, password);
@@ -191,15 +188,15 @@ class Wallet {
             var type = type || 'segwit';
             var privateKey = new PrivateKey(WIF);
             var publicKey = new PublicKey(privateKey);
-            if (!publicKey.compressed && (type == 'native' || type == 'segwit')) {
-                Console.Log("For native and segwit addreses you must use compressed keys");
-                return { };
-            }
+            
+            if (!publicKey.compressed && (type == 'native' || type == 'segwit'))
+                return { error: "For native and segwit addreses you must use compressed keys" };
+
             var address = privateKey.toAddress(type, network).toString();
             if (!reveal) WIF = undefined;
         }
 
-        return { address, WIF };
+        return { success: "Address created", address, WIF };
     }
     static Vanity(pattern, type, testnet, hide) {
         type = type ? type : 'legacy';
@@ -221,17 +218,13 @@ class Wallet {
         if (type == 'legacy' || type == 'native') {
             var alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
             for (var i = 0; i < pattern.length; i++)
-                if (alphabet.indexOf(pattern[i]) == -1) {
-                    Console.Log("'" + pattern[i] + "' is not in the Base58 alphabet" );
-                    return;
-                }
+                if (alphabet.indexOf(pattern[i]) == -1)
+                    return { error: "'" + pattern[i] + "' is not in the Base58 alphabet" };
         } else {
             var alphabet = '123456789abcdefghjklmnpqrstuvwxyz';
             for (var i = 0; i < pattern.length; i++)
-                if (alphabet.indexOf(pattern[i]) == -1) {
-                    Console.Log("'" + pattern[i] + "' is not in the Bech32 alphabet" );
-                    return;
-                }
+                if (alphabet.indexOf(pattern[i]) == -1)
+                    return { error: "'" + pattern[i] + "' is not in the Bech32 alphabet" };
         }
             
         var start = (new Date).getTime();
@@ -261,25 +254,25 @@ class Wallet {
             if (predicate(address))
                 break;
         }
-
-        Console.Log('WIF: ' + privateKey.toWIF());
-        Console.Log('Address: ' + address);
+        return { success: "Address found!", WIF: privateKey.toWIF(), address};
     }
     static async Balance() {
-        if (!global.wallet.storage) {
-            Console.Log("No wallet open!");
-            return {};
-        }
+        if (!global.wallet.storage)
+            return { error: "No wallet open!"};
+        
         var data = await BlockChain.xpub(global.wallet.xpub, global.wallet.storage.network);
+        data.success = "Balance fetched!";
+
         return data;
     }
     static async Transactions() {
-        if (!global.wallet.storage) {
-            Console.Log("No wallet open!");
-            return {};
-        }
+        if (!global.wallet.storage)
+            return { error: "No wallet open!"};
+
         var data = await BlockChain.xpub(global.wallet.xpub, global.wallet.storage.network);
-        return data.transactions || [];
+        if(!data.transactions) data.transactions = [];
+        data.success = "Transactions fetched!";
+        return data;
     }
     static async Explorer(testnet, txid, address) {
         var network = testnet ? 'testnet' : global.wallet.storage ? global.wallet.storage.network : 'livenet';
@@ -297,12 +290,24 @@ class Wallet {
             Console.Log("Confirmations: " + data.confirmations);
             Console.Log("Input: " + data.valueIn);
             for (var i = 0; i < data.vin.length; i++) {
-                Console.Log("  " + data.vin[i].addresses[0] + " " + data.vin[i].value + " " + symbol);
+                if (!data.vin[i].addresses[0]) {
+                    Console.Log("  No input");
+                    continue;
+                }
+                Console.Log("  " + data.vin[i].addresses[0].padEnd(43, " ") + " " + data.vin[i].value + " " + symbol);
             }
             Console.Log("Output: " + data.valueOut);
             for (var i = 0; i < data.vout.length; i++) {
-                Console.Log("  " + data.vout[i].scriptPubKey.addresses[0] + " " + data.vout[i].value + " " + symbol + (data.vout[i].spent ? " (spend)" : ""));
+                if (!data.vout[i].scriptPubKey.addresses[0]) {
+                    Console.Log("  No output");
+                    continue;
+                }
+                if (!data.vout[i].scriptPubKey.addresses[0].startsWith("OP_RETURN"))
+                    Console.Log("  " + data.vout[i].scriptPubKey.addresses[0].padEnd(43, " ") + " " + data.vout[i].value + " " + symbol + (data.vout[i].spent ? " (spend)" : ""));
+                else
+                    var opReturn = data.vout[i].scriptPubKey.addresses[0].substring(11, data.vout[i].scriptPubKey.addresses[0].length - 1);
             }
+            if (opReturn) Console.Log("Data: " + opReturn);
             Console.Log("Fees: " + data.fees);
             Console.Log("Size: " + (data.hex.length / 2) + " Bytes")
         }
@@ -327,16 +332,13 @@ class Wallet {
         }
     }
     static xpub() {
-        if (!global.wallet.storage) {
-            Console.Log("No wallet open!");
-            return;
-        }
-        return global.wallet.xpub;
+        if (!global.wallet.storage)
+            return { error: "No wallet open!" };
+        return { success: "xpub found!", xpub: global.wallet.xpub };
     }
     static async Send(address, amount, data, payload) {
         if (!global.wallet.storage) {
-            Console.Log("No wallet open!");
-            return { };
+            return { error: "No wallet open!" };
         }
 
         var utxos = await BlockChain.utxos(global.wallet.xpub, global.wallet.storage.network);
@@ -348,10 +350,8 @@ class Wallet {
         if (!address) address = Console.ReadLine("Pay to");
 
         
-        if (!Address.isValid(address)) {
-            Console.Log("Invalid address!");
-            return { };
-        }
+        if (!Address.isValid(address))
+            return { error: "Invalid address!" };
 
         if (!amount) amount = Console.ReadLine("Amount");
         if (!data && payload)
@@ -395,16 +395,13 @@ class Wallet {
         }
 
 
-        if (!fee) {
-            Console.Log("Unsuficient funds!");
-            return { };
-        }
+        if (!fee)
+            return { error: "Unsuficient funds!" };
         
         var password = Console.ReadPassword("Password");
-        if(!Wallet.CheckPassword(password)) {
-            Console.Log("Wrong password");
-            return { };
-        }
+        if(!Wallet.CheckPassword(password))
+            return { error: "Wrong password" };
+
         var xprv = global.wallet.storage.xprv;
         var xprv = Util.DecryptAES256(xprv, password);
         var xprv = HDPrivateKey.fromString(xprv);
@@ -431,7 +428,7 @@ class Wallet {
             server = 'testnetexplorer.digibyteservers.io';
 
         var data = await Util.FetchData('https://' + server + '/api/sendtx/' + hex);
-
+        data.success = "Transaction broadcasted!";
         return data;
     }
     static CheckPassword(password) {
