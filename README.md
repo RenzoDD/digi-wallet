@@ -8,8 +8,11 @@ DigiByte is more than a faster digital currency. It is an innovative blockchain 
 
 ## Get Started 📦
 
-Download your the binary that match your OS and you are ready to go. If you prefer, add to your system `PATH` the folder where you save the file.
+Download the lastest binaries [here](https://github.com/RenzoDD/digi-wallet/releases) and execute them using your command prompt or use the npm package manager and install it globally:
 
+```sh
+npm install -g digi-wallet
+```
 
 ## User Manual 📖
 
@@ -18,14 +21,14 @@ You can find all the documentation and information [here](MANUAL.md).
 ## Development 🛠️
 
 ```sh
-git clone https://github.com/RenzoDD/digibyte-wallet
+git clone https://github.com/RenzoDD/digi-wallet
 cd digibyte-wallet
 npm install
 ```
 
 ## Building the Binaries ✨
 
-To build the `digibyte-wallet` binary you must have globally installed `pkg` package:
+To build the `digi-wallet` binary you must have globally installed `pkg` package:
 
 ```sh
 npm install -g pkg

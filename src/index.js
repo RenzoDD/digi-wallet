@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 (async function() {
     global.wallet = {}
     global.wallet.name = null;

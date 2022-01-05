@@ -1,9 +1,12 @@
 {
-  "name": "digibyte-wallet",
-  "version": "1.0.0",
+  "name": "digi-wallet",
+  "version": "0.0.1",
   "description": "A CLI DigiByte Wallet",
   "main": "src/index.js",
-  "bin": "src/index.js",
+  "bin": {
+    "": "src/index.js",
+    "digibyte": "src/index.js"
+  },
   "scripts": {
     "start": "node src/index.js",
     "test": "node src/test.js",
@@ -20,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/RenzoDD/digibyte-wallet.git"
+    "url": "git+https://github.com/RenzoDD/digi-wallet.git"
   },
   "keywords": [
     "digibyte",
@@ -30,9 +33,9 @@
   "author": "Renzo Diaz",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/RenzoDD/digibyte-wallet/issues"
+    "url": "https://github.com/RenzoDD/digi-wallet/issues"
   },
-  "homepage": "https://github.com/RenzoDD/digibyte-wallet#readme",
+  "homepage": "https://github.com/RenzoDD/digi-wallet#readme",
   "dependencies": {
     "axios": "^0.24.0",
     "digibyte-js": "^1.1.3",
