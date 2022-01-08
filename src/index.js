@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+const Util = require('./packages/util');
+
 (async function() {
     global.wallet = {}
     global.wallet.name = null;
@@ -14,8 +16,12 @@
         var cmd = Console.ReadCommand(global.wallet.name);
         
         switch (cmd.command) {
+            case 'version':
+                Console.Log(Util.info.version);
+                break;
             case 'create':
                 var result = Wallet.CreateWallet(cmd.arguments.name, cmd.arguments.password, cmd.arguments.entropy, cmd.arguments.type, cmd.flags.testnet, cmd.flags.nobackup, cmd.flags.noentropy);
+                if (result.error) Console.Log(result.error);
                 if (result.success) {
                     Console.Log(result.success);
                     Console.Log("Path: " + result.path);

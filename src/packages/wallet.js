@@ -13,6 +13,7 @@ const Storage = require('./storage');
 const Console = require('./console');
 const Util = require('./util');
 const BlockChain = require('./blockchain');
+const path = require('path');
 
 class Wallet {
     static CreateWallet(name, password, entropy, type, testnet, nobackup, noentropy) {
@@ -82,8 +83,12 @@ class Wallet {
         password = Util.SHA256(password);
         password = Util.SHA256(Buffer.concat([password, salt]));
 
-        global.wallet.path = process.cwd() + "\\" + name + "." + (network.startsWith("livenet") ? "dgb" : "dgbt");
+        global.wallet.path = path.join(process.cwd(), name + "." + (network.startsWith("livenet") ? "dgb" : "dgbt"));
 
+        if (Util.FileExist(global.wallet.path)) {
+            return { error: "The wallet already exist!" };
+        }
+        
         global.wallet.storage = {
             password,
             salt,

@@ -2,15 +2,15 @@ const reader = require('readline-sync');
 
 class Console {
     static Logo() {
-        console.log("\x1b[40m\x1b[34m", " _____   _       _ ______                  ");
-        console.log("\x1b[40m\x1b[34m", "(____ \\ (_)     (_|____  \\       _         ");
-        console.log("\x1b[40m\x1b[34m", " _   \\ \\ _  ____ _ ____)  )_   _| |_  ____ ");
-        console.log("\x1b[40m\x1b[34m", "| |   | | |/ _  | |  __  (| | | |  _)/ _  )");
-        console.log("\x1b[40m\x1b[34m", "| |__/ /| ( ( | | | |__)  ) |_| | |_( (/ / ");
-        console.log("\x1b[40m\x1b[34m", "|_____/ |_|\\_|| |_|______/ \\__  |\\___)____)");
-        console.log("\x1b[40m\x1b[34m", "          (_____|         (____/           ");
-        console.log("\x1b[40m\x1b[36m", "             By Renzo Diaz & DigiFaucet.org");
-        console.log("\x1b[40m\x1b[37m");
+        console.log("\x1b[34m", " _____   _       _ ______                  ");
+        console.log("\x1b[34m", "(____ \\ (_)     (_|____  \\       _         ");
+        console.log("\x1b[34m", " _   \\ \\ _  ____ _ ____)  )_   _| |_  ____ ");
+        console.log("\x1b[34m", "| |   | | |/ _  | |  __  (| | | |  _)/ _  )");
+        console.log("\x1b[34m", "| |__/ /| ( ( | | | |__)  ) |_| | |_( (/ / ");
+        console.log("\x1b[34m", "|_____/ |_|\\_|| |_|______/ \\__  |\\___)____)");
+        console.log("\x1b[34m", "          (_____|         (____/           ");
+        console.log("\x1b[36m", "             By Renzo Diaz & DigiFaucet.org");
+        console.log("\x1b[37m");
     }
     static Prompt() {
         var cmd = !global.wallet.storage ? "digibyte-wallet" : global.wallet.storage.name + " (" + global.wallet.storage.network.split("-")[0] + ")";
@@ -28,7 +28,7 @@ class Console {
         var data = reader.question(cmd + " > ");
         var words = data.split(' ').filter(x => x != "");
     
-        obj.command = words[0].toLowerCase() || "";
+        obj.command = (words[0] || "").toLowerCase() || "";
     
         for (var i = 1; i < words.length; i++) {
             var word = words[i];

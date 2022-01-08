@@ -7,6 +7,7 @@ axios.defaults.validateStatus = function () {
 };
 
 class Util {
+    static info = require('../../package.json');
     static SHA256(data) {
         return crypto.createHash('sha256').update(data).digest();
     }
