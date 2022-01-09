@@ -1,8 +1,9 @@
 # DigiByte Wallet
 
 ![Licence](https://img.shields.io/badge/licence-MIT-green)
-![NodeJS Version](https://img.shields.io/badge/nodejs-14.15.1-blue)
-![Platform](https://img.shields.io/badge/platform-linux--64%20%7C%20win--64%20%7C%20ios--64-lightgrey)
+![Version](https://img.shields.io/npm/v/digi-wallet?label=version)
+![NodeJS Version](https://img.shields.io/badge/nodejs-14.18.2-blue)
+![Platform](https://img.shields.io/badge/platform-linux--64%20%7C%20win--64%20%7Cmac--64-lightgrey)
 
 DigiByte is more than a faster digital currency. It is an innovative blockchain that can be used for digital assets, smart contracts, decentralized applications and secure authentication.
 
@@ -22,7 +23,7 @@ You can find all the documentation and information [here](MANUAL.md).
 
 ```sh
 git clone https://github.com/RenzoDD/digi-wallet
-cd digibyte-wallet
+cd digi-wallet
 npm install
 ```
 
@@ -41,7 +42,7 @@ This will generate the binaries in the `build` folder.
 
 This wallet is for educative-propouses only. It can be use to store real DigiBytes but we do not take any responsability regarding lost funds.
 
-If you find any flaw or trouble please submit a new thread on [Github Issues](https://github.com/RenzoDD/digibyte-wallet/issues)
+If you find any flaw or trouble please submit a new thread on [Github Issues](https://github.com/RenzoDD/digi-wallet/issues)
 
 ## Donate 💰
 

@@ -7,7 +7,7 @@ The following commands can be used to interact with the wallet.
 Create a file that contains all the information of a crypto wallet.
 
 ```
-digibyte-wallet > create -name my_wallet
+digi-wallet > create -name my_wallet
 ```
 
 Find more information [here](create.md).
@@ -17,7 +17,7 @@ Find more information [here](create.md).
 Open an existing wallet
 
 ```
-digibyte-wallet > open
+digi-wallet > open
 ```
 
 Find more information [here](open.md).
@@ -83,11 +83,11 @@ Find more information [here](send.md).
 Lookup an address or transaction in the blockchain
 
 ```
-digibyte-wallet > explorer
-digibyte-wallet > Server:  digibyteblockexplorer.com
-digibyte-wallet > In sync: true
-digibyte-wallet > Height:  14263036
-digibyte-wallet > Mempool: 17
+digi-wallet > explorer
+digi-wallet > Server:  digibyteblockexplorer.com
+digi-wallet > In sync: true
+digi-wallet > Height:  14263036
+digi-wallet > Mempool: 17
 ```
 
 Find more information [here](explorer.md).

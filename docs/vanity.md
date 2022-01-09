@@ -18,9 +18,9 @@ Is an address that contains an specific substring. To look for an address you mu
 ## Examples
 
 ```
-digibyte-wallet > vanity -pattern DDiaz
-digibyte-wallet > 103219 addresses checked
-digibyte-wallet > 1021 / sec
-digibyte-wallet > WIF: L2HzbXijGWWX2o8Nug5N5oAzDnnuRJzWyc8XzoiNLAhRRKUZVVpj
-digibyte-wallet > Address: DDiazCg7s9dFAbSkPHGVAbqj5h9GpzZTYk
+digi-wallet > vanity -pattern DDiaz
+digi-wallet > 103219 addresses checked
+digi-wallet > 1021 / sec
+digi-wallet > WIF: L2HzbXijGWWX2o8Nug5N5oAzDnnuRJzWyc8XzoiNLAhRRKUZVVpj
+digi-wallet > Address: DDiazCg7s9dFAbSkPHGVAbqj5h9GpzZTYk
 ```

@@ -36,5 +36,8 @@ class Util {
         var data = await axios.get(url);
         return data.data;
     }
+    static GetFiles() {
+        return fs.readdirSync(process.cwd()).filter(f => f.endsWith('.dgb') || f.endsWith('.dgbt'));
+    }
 }
 module.exports = Util;

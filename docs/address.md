@@ -38,18 +38,18 @@ my-wallet > WIF: Kzk2T1cCwha1FEHWE611UK1LjRE9Y1wqssum31FzCEAuBEfX8E59
 
 Generate the address from a custom WIF
 ```
-digibyte-wallet > address -WIF L1Zi5auVHeeAheAN9E6ofhj36qF68175of75JjdVY8wdshLoywoE
-digibyte-wallet > Address: DBgp1RAMB7bth5EHKv1AqkT7yMfXKuA1gU
+digi-wallet > address -WIF L1Zi5auVHeeAheAN9E6ofhj36qF68175of75JjdVY8wdshLoywoE
+digi-wallet > Address: DBgp1RAMB7bth5EHKv1AqkT7yMfXKuA1gU
 ```
 
 Generate a random address
 ```
-digibyte-wallet > address --random
-digibyte-wallet > Address: DNVGoDfcEYYLRPaHj6vGHEZ4PfHMVgpFb7
-digibyte-wallet > WIF: KxdNHU1eq1WVXN1Gyw45wKM8AescD9ZYNirA8yu57U2UBQiZ7d6h
+digi-wallet > address --random
+digi-wallet > Address: DNVGoDfcEYYLRPaHj6vGHEZ4PfHMVgpFb7
+digi-wallet > WIF: KxdNHU1eq1WVXN1Gyw45wKM8AescD9ZYNirA8yu57U2UBQiZ7d6h
 ```
 ```
-digibyte-wallet > address -type segwit --random
-digibyte-wallet > Address: dgb1qtq60jyhu80dhvn9p5uu7357rs6jsdc3arpc5k9
-digibyte-wallet > WIF: L2NDibFpGchAQWGU3kTHWeNa7yn7ZgX9c7ABa8EaFFtcP4KA5NoM
+digi-wallet > address -type segwit --random
+digi-wallet > Address: dgb1qtq60jyhu80dhvn9p5uu7357rs6jsdc3arpc5k9
+digi-wallet > WIF: L2NDibFpGchAQWGU3kTHWeNa7yn7ZgX9c7ABa8EaFFtcP4KA5NoM
 ```

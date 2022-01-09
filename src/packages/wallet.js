@@ -96,6 +96,7 @@ class Wallet {
             xpub,
             type,
             network,
+            server: BlockChain.Server(network),
             name,
             derivation,
             symbol,
@@ -112,8 +113,16 @@ class Wallet {
             path: global.wallet.path 
         };
     }
+    static ShowWallets() {
+        Console.Log('Wallet List:')
+        var wallets = Util.GetFiles();
+        for (var i = 0; i < wallets.length; i++)
+            Console.Log("  " + wallets[i]);
+        if (wallets.length == 0)
+            Console.Log('  No wallets found!')
+    }
     static OpenWallet(path, password) {
-        if (!path) path = Console.ReadLine("Enter file path");
+        if (!path) path = Console.ReadLine("Wallet path/name");
 
         if(!Util.FileExist(path)) {
             return { error: "The file doesn't exist!" };
@@ -265,7 +274,7 @@ class Wallet {
         if (!global.wallet.storage)
             return { error: "No wallet open!"};
         
-        var data = await BlockChain.xpub(global.wallet.xpub, global.wallet.storage.network);
+        var data = await BlockChain.xpub(global.wallet.xpub);
         data.success = "Balance fetched!";
 
         return data;
@@ -274,17 +283,17 @@ class Wallet {
         if (!global.wallet.storage)
             return { error: "No wallet open!"};
 
-        var data = await BlockChain.xpub(global.wallet.xpub, global.wallet.storage.network);
+        var data = await BlockChain.xpub(global.wallet.xpub);
         if(!data.transactions) data.transactions = [];
         data.success = "Transactions fetched!";
         return data;
     }
     static async Explorer(testnet, txid, address) {
-        var network = testnet ? 'testnet' : global.wallet.storage ? global.wallet.storage.network : 'livenet';
-        var symbol = network.startsWith("testnet") ? "DGBT" : "DGB";
+        var network = testnet ? 'testnet' : null;
+        var symbol = testnet ? "DGBT" : "DGB";
 
         if (txid) {
-            var data = await BlockChain.tx(network, txid);
+            var data = await BlockChain.tx(txid, network);
 
             if (data.error) {
                 Console.Log("Error: " + data.error);
@@ -317,7 +326,7 @@ class Wallet {
             Console.Log("Size: " + (data.hex.length / 2) + " Bytes")
         }
         else if (address) {
-            var data = await BlockChain.address(network, address);
+            var data = await BlockChain.address(address, network);
 
             if (data.error) {
                 Console.Log("Error: " + data.error);
@@ -346,7 +355,7 @@ class Wallet {
             return { error: "No wallet open!" };
         }
 
-        var utxos = await BlockChain.utxos(global.wallet.xpub, global.wallet.storage.network);
+        var utxos = await BlockChain.utxos(global.wallet.xpub);
 
         var balance = 0;
         utxos.forEach(utxo => {balance += utxo.satoshis})
@@ -428,12 +437,7 @@ class Wallet {
         
         var hex = tx.serialize(true);
         
-        var server = 'digibyteblockexplorer.com';
-        if (global.wallet.storage.network.startsWith('testnet'))
-            server = 'testnetexplorer.digibyteservers.io';
-
-        var data = await Util.FetchData('https://' + server + '/api/sendtx/' + hex);
-        data.success = "Transaction broadcasted!";
+        var data = await BlockChain.broadcast(hex);
         return data;
     }
     static CheckPassword(password) {

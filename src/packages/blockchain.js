@@ -3,7 +3,7 @@ const Util = require('./util');
 
 class BlockChain {
     static async utxos(xpub, network) {
-        var server = network.startsWith('livenet') ? 'digibyteblockexplorer.com' : 'testnetexplorer.digibyteservers.io';
+        var server = BlockChain.Server(network || ((global.wallet.storage) ? global.wallet.storage.server : 'livenet') );
         var data = await Util.FetchData('https://' + server + '/api/v2/utxo/' + xpub + '?details=tokenBalances&confirmed=true');
 
         data = data.reverse();
@@ -33,7 +33,7 @@ class BlockChain {
     }
     static async xpub(xpub, network)
     {
-        var server = network.startsWith('livenet') ? 'digibyteblockexplorer.com' : 'testnetexplorer.digibyteservers.io';
+        var server = BlockChain.Server(network || ((global.wallet.storage) ? global.wallet.storage.server : 'livenet') );
         var data = await Util.FetchData('https://' + server + '/api/xpub/' + xpub);
 
         if (data.transactions)
@@ -46,23 +46,43 @@ class BlockChain {
             transactions: data.transactions
         };
     }
-    static async tx(network, txid) {
-        var server = network.startsWith('livenet') ? 'digibyteblockexplorer.com' : 'testnetexplorer.digibyteservers.io';
+    static async tx(txid, network) {
+        var server = BlockChain.Server(network || ((global.wallet.storage) ? global.wallet.storage.server : 'livenet') );
         var data = await Util.FetchData('https://' + server + '/api/tx/' + txid);
         
         return data;
     }
-    static async address(network, address) {
-        var server = network.startsWith('livenet') ? 'digibyteblockexplorer.com' : 'testnetexplorer.digibyteservers.io';
+    static async address(address, network) {
+        var server = BlockChain.Server(network || (global.wallet.storage) ? global.wallet.storage.server : 'livenet' );
         var data = await Util.FetchData('https://' + server + '/api/address/' + address);
         
         return data;
     }
+    static async broadcast(hex, network) {
+        var server = BlockChain.Server(network || ((global.wallet.storage) ? global.wallet.storage.server : 'livenet') );
+        var data = await Util.FetchData('https://' + server + '/api/sendtx/' + hex);
+
+        if (data.error)
+            return data;
+
+        return {
+            success: "Transaction broadcasted!",
+            txid: data.result
+        };
+    }
     static async api(network) {
-        var server = network.startsWith('livenet') ? 'digibyteblockexplorer.com' : 'testnetexplorer.digibyteservers.io';
+        var server = BlockChain.Server(network || ((global.wallet.storage) ? global.wallet.storage.server : 'livenet') );
         var data = await Util.FetchData('https://' + server + '/api');
         data.server = server;
         return data;
+    }
+    static Server(server) {
+        if (!server || server.startsWith('livenet'))
+            return 'digibyteblockexplorer.com';
+        else if (server.startsWith('testnet'))
+            return 'testnetexplorer.digibyteservers.io';
+        
+        return server; 
     }
 }
 module.exports = BlockChain;

@@ -5,7 +5,6 @@ const Util = require('./packages/util');
 (async function() {
     global.wallet = {}
     global.wallet.name = null;
-    global.wallet.database = null;
     global.wallet.xpub = null;
 
     const Console = require('./packages/console');
@@ -27,8 +26,11 @@ const Util = require('./packages/util');
                     Console.Log("Path: " + result.path);
                 }
                 break;
+            case 'wallets':
+                Wallet.ShowWallets();
+                break;
             case 'open':
-                var result = Wallet.OpenWallet(cmd.arguments.path, cmd.arguments.password);
+                var result = Wallet.OpenWallet(cmd.arguments.path || cmd.arguments.name, cmd.arguments.password);
                 if (result.error) Console.Log(result.error);
                 if (result.success) Console.Log(result.success);
                 break;
@@ -72,7 +74,7 @@ const Util = require('./packages/util');
             case 'send':
                 var data = await Wallet.Send(cmd.arguments.address, cmd.arguments.value, cmd.arguments.data, cmd.flags.payload);
                 if(data.error) Console.Log("Error: " + data.error);
-                if(data.result) Console.Log("TXID: " + data.result);
+                if(data.success) Console.Log("TXID: " + data.txid);
                 break;
             case 'vanity':
                 var result = Wallet.Vanity(cmd.arguments.pattern, cmd.arguments.type, cmd.flags.testnet, cmd.flags.hide);

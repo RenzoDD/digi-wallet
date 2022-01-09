@@ -13,7 +13,7 @@ class Console {
         console.log("\x1b[37m");
     }
     static Prompt() {
-        var cmd = !global.wallet.storage ? "digibyte-wallet" : global.wallet.storage.name + " (" + global.wallet.storage.network.split("-")[0] + ")";
+        var cmd = !global.wallet.storage ? "digi-wallet" : global.wallet.storage.name + " (" + global.wallet.storage.network.split("-")[0] + ")";
         return cmd;
     }
     static ReadCommand() {
@@ -63,7 +63,7 @@ class Console {
         console.clear();
     }
     static Pause() {
-        var cmd = !global.wallet.storage ? "digibyte-wallet" : global.wallet.storage.name + " (" + global.wallet.storage.network + ")";
+        var cmd = !global.wallet.storage ? "digi-wallet" : global.wallet.storage.name + " (" + global.wallet.storage.network + ")";
         reader.keyIn(cmd + " > Press any key to continue...");
     }
 }

@@ -23,15 +23,15 @@ To create a wallet you must use the `create` command, with the `-name`, `-passwo
 
 A segwit wallet (dgb1...)
 ```
-digibyte-wallet > createwallet -name my_wallet
+digi-wallet > createwallet -name my_wallet
 ```
 
 A legacy wallet (D...)
 ```
-digibyte-wallet > createwallet -name my_wallet -type legacy
+digi-wallet > createwallet -name my_wallet -type legacy
 ```
 
 A segwit testnet wallet (dgbt1...)
 ```
-digibyte-wallet > createwallet -name my_wallet --testnet
+digi-wallet > createwallet -name my_wallet --testnet
 ```
