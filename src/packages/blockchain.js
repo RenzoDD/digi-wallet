@@ -6,6 +6,9 @@ class BlockChain {
         var server = BlockChain.Server(network || ((global.wallet.storage) ? global.wallet.storage.server : 'livenet') );
         var data = await Util.FetchData('https://' + server + '/api/v2/utxo/' + xpub + '?details=tokenBalances&confirmed=true');
 
+        if (data.error)
+            return data;
+
         data = data.reverse();
 
         var utxos = [];
@@ -36,10 +39,14 @@ class BlockChain {
         var server = BlockChain.Server(network || ((global.wallet.storage) ? global.wallet.storage.server : 'livenet') );
         var data = await Util.FetchData('https://' + server + '/api/xpub/' + xpub);
 
+        if (data.error)
+            return data;
+
         if (data.transactions)
             data.transactions = data.transactions.reverse();
             
         return {
+            success: 'xpub information fetched!',
             confirmed: data.balance,
             unconfirmed: data.unconfirmedBalance,
             apperances: data.txApperances,
@@ -50,12 +57,16 @@ class BlockChain {
         var server = BlockChain.Server(network || ((global.wallet.storage) ? global.wallet.storage.server : 'livenet') );
         var data = await Util.FetchData('https://' + server + '/api/tx/' + txid);
         
+        if (!data.error)
+            data.success = 'Transaction information fetched!';
         return data;
     }
     static async address(address, network) {
         var server = BlockChain.Server(network || (global.wallet.storage) ? global.wallet.storage.server : 'livenet' );
         var data = await Util.FetchData('https://' + server + '/api/address/' + address);
         
+        if (!data.error)
+            data.success = 'Address information fetched!';
         return data;
     }
     static async broadcast(hex, network) {

@@ -128,13 +128,22 @@ class Wallet {
             return { error: "The file doesn't exist!" };
         }
 
+        global.wallet.storage = Storage.Open(path);
+
         if (!password) password = Console.ReadPassword("Password");
         
-        global.wallet.storage = Storage.Open(path);
-        if (!Wallet.CheckPassword(password)){
-            global.wallet.storage = undefined;
-            password = undefined;
-            return { error: "Invalid password!" };
+        var attempts = 3;
+        while (attempts--) {
+            if (Wallet.CheckPassword(password))
+                break;
+            else if (attempts)
+                password = Console.ReadPassword("Password");
+            
+            if (!attempts) {
+                global.wallet.storage = undefined;
+                password = undefined;
+                return { error: "Invalid password!" };
+            }
         }
 
         global.wallet.xpub = Util.DecryptAES256(global.wallet.storage.xpub, password);
@@ -178,10 +187,20 @@ class Wallet {
                 WIF = undefined;
             } else {
                 if (!password) password = Console.ReadPassword("Password");
-                if (!Wallet.CheckPassword(password)) {
-                    password = undefined;
-                    return { error: "Incorrect password!" };
+                
+                var attempts = 3;
+                while (attempts--) {
+                    if (Wallet.CheckPassword(password))
+                        break;
+                    else if (attempts)
+                        password = Console.ReadPassword("Password");
+                    
+                    if (!attempts) {
+                        password = undefined;
+                        return { error: "Invalid password!" };
+                    }
                 }
+
                 var xprv = global.wallet.storage.xprv;
                 xprv = Util.DecryptAES256(xprv, password);
                 password = undefined;
@@ -275,9 +294,104 @@ class Wallet {
             return { error: "No wallet open!"};
         
         var data = await BlockChain.xpub(global.wallet.xpub);
-        data.success = "Balance fetched!";
+
+        if (!data.error)
+            data.success = "Balance fetched!";
 
         return data;
+    }
+    static async Sweep(wif, data, payload) {
+
+        if (!global.wallet.storage)
+            return { error: "No wallet open!"};
+
+        var network = global.wallet.storage.network;
+        var symbol = network.startsWith('testnet') ? "DGBT" : "DGB";
+            
+        if (!wif) wif = Console.ReadLine("WIF");
+
+        if (!PrivateKey.isValid(wif))
+            return { error: 'Invalid WIF!' };
+
+        if (!data && payload)
+            data = Console.ReadLine("Extra data");
+        else
+            data = "";
+
+        var privateKey = new PrivateKey(wif);
+
+        var legacy = privateKey.toAddress('legacy', network).toString();
+        
+        if (privateKey.compressed){
+            var native = privateKey.toAddress('native', network).toString();
+            var segwit = privateKey.toAddress('segwit', network).toString();
+        }
+
+        Console.Log("Scanning the blockchain...");
+
+        var utxos = [];
+        var valueIn = 0;
+        legacy = { address: legacy, utxos: await BlockChain.utxos(legacy), satoshis: 0 };
+        for (var i = 0; i < legacy.utxos.length; i++) {
+            legacy.satoshis += legacy.utxos[i].satoshis;
+            utxos.push(legacy.utxos[i]);
+        }
+        valueIn += legacy.satoshis;
+        if (legacy.satoshis != 0)
+            Console.Log("  " + legacy.address + ": " + Unit.fromSatoshis(legacy.satoshis).toDGB() + " " + symbol);
+
+        if (native) {
+            native = { address: native, utxos: await BlockChain.utxos(native), satoshis: 0 };
+            for (var i = 0; i < native.utxos.length; i++) {
+                native.satoshis += native.utxos[i].satoshis;
+                utxos.push(native.utxos[i]);
+            }
+            valueIn += native.satoshis;
+            if (native.satoshis != 0)
+                Console.Log("  " + native.address + ": " + Unit.fromSatoshis(native.satoshis).toDGB() + " " + symbol);
+        }
+        if (segwit) {
+            segwit = { address: segwit, utxos: await BlockChain.utxos(segwit), satoshis: 0 };
+            for (var i = 0; i < segwit.utxos.length; i++) {
+                segwit.satoshis += segwit.utxos[i].satoshis;
+                utxos.push(segwit.utxos[i]);
+            }
+            valueIn += segwit.satoshis;
+            if (segwit.satoshis != 0)
+                Console.Log("  " + segwit.address + ": " + Unit.fromSatoshis(segwit.satoshis).toDGB() + " " + symbol);
+        }
+
+        var fee = Wallet.TxSize(utxos.length, 1, data.length);
+
+        var valueOut = valueIn - fee;
+
+        if (valueIn == 0)
+            return { error: 'Empty Private Key!'}
+
+        if (valueOut <= 546)
+            return { error: 'Dust output detected!' };
+
+        Console.Log("Total: " + Unit.fromSatoshis(valueIn).toDGB() + " " + symbol);
+        var ans = Console.ReadLine("Reedem wallet? (y/n)");
+
+        if (ans.toUpperCase() != "Y")
+            return { error: "Operation canceled!" };
+
+        var change = Wallet.GenerateAddress(true).address;
+
+        var tx = new Transaction();
+        tx.from(utxos);
+        tx.to(change, valueOut);
+        tx.fee(fee);
+        if (data != "") tx.addData(data);
+        tx.sign(privateKey);
+        
+        var hex = tx.serialize(true);
+        
+        var data = await BlockChain.broadcast(hex);
+        return data;
+
+        
     }
     static async Transactions() {
         if (!global.wallet.storage)
@@ -296,59 +410,82 @@ class Wallet {
             var data = await BlockChain.tx(txid, network);
 
             if (data.error) {
-                Console.Log("Error: " + data.error);
+                Console.Log(data.error);
                 return;
-            } 
-
-            Console.Log("DateTime: " + new Date(data.blocktime * 1000));
-            Console.Log("Confirmations: " + data.confirmations);
-            Console.Log("Input: " + data.valueIn);
-            for (var i = 0; i < data.vin.length; i++) {
-                if (!data.vin[i].addresses[0]) {
-                    Console.Log("  No input");
-                    continue;
+            } else {
+                Console.Log("DateTime: " + new Date(data.blocktime * 1000));
+                Console.Log("Confirmations: " + data.confirmations);
+                Console.Log("Input: " + data.valueIn);
+                for (var i = 0; i < data.vin.length; i++) {
+                    if (!data.vin[i].addresses[0]) {
+                        Console.Log("  No input");
+                        continue;
+                    }
+                    Console.Log("  " + data.vin[i].addresses[0].padEnd(43, " ") + " " + data.vin[i].value + " " + symbol);
                 }
-                Console.Log("  " + data.vin[i].addresses[0].padEnd(43, " ") + " " + data.vin[i].value + " " + symbol);
-            }
-            Console.Log("Output: " + data.valueOut);
-            for (var i = 0; i < data.vout.length; i++) {
-                if (!data.vout[i].scriptPubKey.addresses[0]) {
-                    Console.Log("  No output");
-                    continue;
+                Console.Log("Output: " + data.valueOut);
+                for (var i = 0; i < data.vout.length; i++) {
+                    if (!data.vout[i].scriptPubKey.addresses[0]) {
+                        Console.Log("  No output");
+                        continue;
+                    }
+                    if (!data.vout[i].scriptPubKey.addresses[0].startsWith("OP_RETURN"))
+                        Console.Log("  " + data.vout[i].scriptPubKey.addresses[0].padEnd(43, " ") + " " + data.vout[i].value + " " + symbol + (data.vout[i].spent ? " (spend)" : ""));
+                    else
+                        var opReturn = data.vout[i].scriptPubKey.addresses[0].substring(11, data.vout[i].scriptPubKey.addresses[0].length - 1);
                 }
-                if (!data.vout[i].scriptPubKey.addresses[0].startsWith("OP_RETURN"))
-                    Console.Log("  " + data.vout[i].scriptPubKey.addresses[0].padEnd(43, " ") + " " + data.vout[i].value + " " + symbol + (data.vout[i].spent ? " (spend)" : ""));
-                else
-                    var opReturn = data.vout[i].scriptPubKey.addresses[0].substring(11, data.vout[i].scriptPubKey.addresses[0].length - 1);
+                if (opReturn) Console.Log("Data: " + opReturn);
+                Console.Log("Fees: " + data.fees);
+                Console.Log("Size: " + (data.hex.length / 2) + " Bytes")
             }
-            if (opReturn) Console.Log("Data: " + opReturn);
-            Console.Log("Fees: " + data.fees);
-            Console.Log("Size: " + (data.hex.length / 2) + " Bytes")
-        }
-        else if (address) {
+        } else if (address) {
             var data = await BlockChain.address(address, network);
 
             if (data.error) {
-                Console.Log("Error: " + data.error);
-                return;
-            } 
-
-            Console.Log("Total Received: " + data.totalReceived);
-            Console.Log("Total Sent:     " + data.totalSent);
-            Console.Log("Total Balance:  " + data.balance);
-            Console.Log("Tx Apperances:  " + data.txApperances);
+                Console.Log(data.error);
+            } else { 
+                Console.Log("Total Received: " + data.totalReceived);
+                Console.Log("Total Sent:     " + data.totalSent);
+                Console.Log("Total Balance:  " + data.balance);
+                Console.Log("Tx Apperances:  " + data.txApperances);
+            }
         } else {
             var data = await BlockChain.api(network);
-            Console.Log("Server:  " + data.server);
-            Console.Log("In sync: " + data.blockbook.inSync);
-            Console.Log("Height:  " + data.backend.blocks);
-            Console.Log("Mempool: " + data.blockbook.mempoolSize);
+            
+            if (data.error) {
+                Console.Log(data.error);
+            } else {
+                Console.Log("Server:  " + data.server);
+                Console.Log("In sync: " + data.blockbook.inSync);
+                Console.Log("Height:  " + data.backend.blocks);
+                Console.Log("Mempool: " + data.blockbook.mempoolSize);
+            }
         }
     }
     static xpub() {
         if (!global.wallet.storage)
             return { error: "No wallet open!" };
         return { success: "xpub found!", xpub: global.wallet.xpub };
+    }
+    static Help() {
+        Console.Log("Welcome to your DigiByte Wallet!");
+        Console.Log("List of commands:");
+        Console.Log(" version:      Check the wallet version");
+        Console.Log(" wallets:      List all the wallets in current directory");
+        Console.Log(" create:       Create a wallet");
+        Console.Log(" open:         Open an existing wallet");
+        Console.Log(" close:        Close the current wallet");
+        Console.Log(" balance:      Check the balance of your wallet");
+        Console.Log(" transactions: List all transactions of the wallet");
+        Console.Log(" address:      Generate and show the next HD wallet");
+        Console.Log(" xpub:         Show the master public key of your wallet");
+        Console.Log(" explorer:     Explore the DigiByte network");
+        Console.Log(" sweep:        Redeem a paper wallet");
+        Console.Log(" send:         Create and broadcast a DigiByte transaction");
+        Console.Log(" vanity:       Generate a custom DigiByte address");
+        Console.Log(" free:         Get free DigiBytes");
+        Console.Log(" clear:        Clear your terminal");
+        Console.Log(" exit:         Exit the terminal");
     }
     static async Send(address, amount, data, payload) {
         if (!global.wallet.storage) {
@@ -357,8 +494,16 @@ class Wallet {
 
         var utxos = await BlockChain.utxos(global.wallet.xpub);
 
+        if (utxos.error)
+            return utxos;
+
         var balance = 0;
-        utxos.forEach(utxo => {balance += utxo.satoshis})
+        utxos.forEach(utxo => { balance += utxo.satoshis })
+
+        if (balance == 0) {
+            return { error: 'Your wallet is empty!' };
+        }
+
         Console.Log("Available balance: " + Unit.fromSatoshis(balance).toDGB() + ' ' + global.wallet.storage.symbol);
 
         if (!address) address = Console.ReadLine("Pay to");
@@ -376,6 +521,9 @@ class Wallet {
         if (amount != 'all') {
             var satoshis = amount = Unit.fromDGB(amount).toSatoshis();
             
+            if (isNaN(amount))
+                return { error: 'Invalid amount!' };
+
             var inputs = [];
             for (var i = 0; i < utxos.length; i++) {
                 inputs.push(utxos[i]);
@@ -413,8 +561,18 @@ class Wallet {
             return { error: "Unsuficient funds!" };
         
         var password = Console.ReadPassword("Password");
-        if(!Wallet.CheckPassword(password))
-            return { error: "Wrong password" };
+        var attempts = 3;
+        while (attempts--) {
+            if (Wallet.CheckPassword(password))
+                break;
+            else if (attempts)
+                password = Console.ReadPassword("Password");
+            
+            if (!attempts) {
+                password = undefined;
+                return { error: "Invalid password!" };
+            }
+        }
 
         var xprv = global.wallet.storage.xprv;
         var xprv = Util.DecryptAES256(xprv, password);

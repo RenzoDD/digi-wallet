@@ -33,8 +33,16 @@ class Util {
         return fs.existsSync(path);
     }
     static async FetchData(url) {
-        var data = await axios.get(url);
-        return data.data;
+        try {
+            var data = await axios.get(url);
+
+            if (typeof data.data == 'object')
+                return data.data;
+            else
+                return { error: 'Server unavailable!' };
+        } catch {
+            return { error: 'Server unavailable!' };
+        }
     }
     static GetFiles() {
         return fs.readdirSync(process.cwd()).filter(f => f.endsWith('.dgb') || f.endsWith('.dgbt'));
