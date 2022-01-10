@@ -101,7 +101,8 @@ class Wallet {
             derivation,
             symbol,
             change: 0,
-            index: 0
+            index: 0,
+            version: Util.info.version
         }
 
         Storage.Save(global.wallet.path, global.wallet.storage);
@@ -144,6 +145,12 @@ class Wallet {
                 password = undefined;
                 return { error: "Invalid password!" };
             }
+        }
+
+        if (global.wallet.storage.version != Util.info.version) {
+            Console.Log("Version mismatch, this could corrupt your wallet")
+            Console.Log("Terminal v" + Util.info.version)
+            Console.Log("Wallet v" + global.wallet.storage.version)
         }
 
         global.wallet.xpub = Util.DecryptAES256(global.wallet.storage.xpub, password);
