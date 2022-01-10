@@ -31,7 +31,15 @@ class Wallet {
         var symbol = !testnet ? "DGB" : "DGBT";
 
         if (!password) {
-            var password = Console.ReadPassword("Create password");
+            var password = 1, password1 = 0;
+            while (password != password1) {
+                if (password === 1) {
+                    Console.Log("The passwords doesn't match!");
+                }
+                password = Console.ReadPassword("Create password");
+                password1 = Console.ReadPassword("Repeat password");
+            }
+
         }
 
         var salt = Util.RandomBuffer();
@@ -113,6 +121,86 @@ class Wallet {
             success: 'Wallet created!',
             path: global.wallet.path 
         };
+    }
+    static RestoreWallet(name, password, type, testnet) {
+        var mnemonic = Console.ReadLine("Seed phrase");
+
+        if (!BIP39.CheckMnemonic(mnemonic))
+            return { error: 'Invalid mnemonic phrase!' }
+
+            if (!name) {
+                name = Console.ReadLine("Name (default)");
+                if (name == "") name = "default";
+            }
+            
+            type = !type ? "segwit" : type;
+            if (type != 'legacy' && type != 'native' && type != 'segwit') type = 'segwit';
+    
+            var network = !testnet ? "livenet" : "testnet";
+            if (type != 'legacy') network += "-" + type;
+    
+            var symbol = !testnet ? "DGB" : "DGBT";
+    
+            if (!password) {
+
+                var password = 1, password1 = 0;
+                while (password != password1) {
+                    if (password !== 1) {
+                        Console.Log("The passwords doesn't match!");
+                    }
+                    password = Console.ReadPassword("Create password");
+                    password1 = Console.ReadPassword("Repeat password");
+                }
+
+            }
+            
+            var salt = Util.RandomBuffer();
+
+            var derivation = "m/" + (type == "legacy" ? 44 : (type == "segwit" ? 84 : 49)) + "'/" + (network.startsWith('testnet') ? 1 : 20) + "'/0'";
+            var seed = BIP39.MnemonicToSeed(mnemonic);
+            var xprv = HDPrivateKey.fromSeed(seed, network);
+            var xpub = xprv.derive("m/" + (type == "legacy" ? 44 : (type == "segwit" ? 84 : 49)) + "'/" + (testnet ? 1 : 20) + "'/0'").hdPublicKey.toString();
+    
+            xprv = xprv.toString();
+    
+            global.wallet.xpub = xpub;
+    
+            xprv = Util.EncryptAES256(xprv, password);
+            xpub = Util.EncryptAES256(xpub, password);
+    
+            password = Util.SHA256(password);
+            password = Util.SHA256(Buffer.concat([password, salt]));
+    
+            global.wallet.path = path.join(process.cwd(), name + "." + (network.startsWith("livenet") ? "dgb" : "dgbt"));
+    
+            if (Util.FileExist(global.wallet.path)) {
+                return { error: "The wallet already exist!" };
+            }
+            
+            global.wallet.storage = {
+                password,
+                salt,
+                xprv,
+                xpub,
+                type,
+                network,
+                server: BlockChain.Server(network),
+                name,
+                derivation,
+                symbol,
+                change: 0,
+                index: 0,
+                version: Util.info.version
+            }
+    
+            Storage.Save(global.wallet.path, global.wallet.storage);
+    
+            salt = xprv = xpub = type = network = null;
+    
+            return { 
+                success: 'Wallet restored!',
+                path: global.wallet.path 
+            };
     }
     static ShowWallets() {
         Console.Log('Wallet List:')
@@ -477,7 +565,7 @@ class Wallet {
     static Help() {
         Console.Log("Welcome to your DigiByte Wallet!");
         Console.Log("List of commands:");
-        Console.Log(" version:      Check the wallet version");
+        Console.Log(" version:      Check the version of your terminal");
         Console.Log(" wallets:      List all the wallets in current directory");
         Console.Log(" create:       Create a wallet");
         Console.Log(" open:         Open an existing wallet");

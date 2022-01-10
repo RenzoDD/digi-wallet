@@ -1,6 +1,6 @@
-# Create Wallet
+# Restore Wallet
 
-To create a wallet you must use the `create` command, with the `-name`, `-password`, `-entropy` arguments. By default it will generate a segwit wallet in the livenet network.
+To restore a wallet from a mnemonic phrase you must use the `restore` command, with the `-name` and `-password` arguments. By default it will generate a segwit wallet in the livenet network unless you provide the custom flags.
 
 ## Arguments
 
@@ -8,7 +8,6 @@ To create a wallet you must use the `create` command, with the `-name`, `-passwo
 | --------- | ----------------- | ---------------------------- |
 | -name     | Wallet name       | A string                     |
 | -password | Wallet password   | A string                     |
-| -entropy  | Initial entropy   | A string                     |
 | -type     | Address type      | `legacy`, `segwit`, `native` |
 
 ## Flags
@@ -16,22 +15,20 @@ To create a wallet you must use the `create` command, with the `-name`, `-passwo
 | Flag        | Description            |
 | ----------- | ---------------------- |
 | --testnet   | Enable testnet         |
-| --nobackup  | Hide mnemonic          |
-| --noentropy | Disable manual entropy |
 
 ## Examples
 
 A segwit wallet (dgb1...)
 ```
-digi-wallet > create -name my_wallet
+digi-wallet > restore -name my_wallet
 ```
 
 A legacy wallet (D...)
 ```
-digi-wallet > create -name my_wallet -type legacy
+digi-wallet > restore -name my_wallet -type legacy
 ```
 
 A segwit testnet wallet (dgbt1...)
 ```
-digi-wallet > create -name my_wallet --testnet
+digi-wallet > restore -name my_wallet --testnet
 ```

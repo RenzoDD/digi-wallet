@@ -46,6 +46,14 @@ if (process.argv.length > 0)
                     Console.Log("Path: " + result.path);
                 }
                 break;
+            case 'restore':
+                var result = Wallet.RestoreWallet(cmd.arguments.name, cmd.arguments.password, cmd.arguments.type, cmd.flags.testnet);
+                if (result.error) Console.Log(result.error);
+                if (result.success) {
+                    Console.Log(result.success);
+                    Console.Log("Path: " + result.path);
+                }
+                break;
             case 'wallets':
                 Wallet.ShowWallets();
                 break;
