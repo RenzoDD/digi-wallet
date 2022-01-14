@@ -71,11 +71,9 @@ class BlockChain {
     }
     static async broadcast(hex, network) {
         var server = BlockChain.Server(network || ((global.wallet.storage) ? global.wallet.storage.server : 'livenet') );
-        var data = await Util.FetchData('https://' + server + '/api/sendtx/' + hex);
-
+        var data = await Util.FetchData('https://' + server + '/api/v2/sendtx/', hex);
         if (data.error)
             return data;
-
         return {
             success: "Transaction broadcasted!",
             txid: data.result

@@ -578,7 +578,7 @@ class Wallet {
         Console.Log(" sweep:        Redeem a paper wallet");
         Console.Log(" send:         Create and broadcast a DigiByte transaction");
         Console.Log(" vanity:       Generate a custom DigiByte address");
-        Console.Log(" free:         Get free DigiBytes");
+        Console.Log(" faucet:       Get free DigiByte");
         Console.Log(" clear:        Clear your terminal");
         Console.Log(" exit:         Exit the terminal");
     }

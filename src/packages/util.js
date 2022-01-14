@@ -32,14 +32,17 @@ class Util {
     static FileExist(path) {
         return fs.existsSync(path);
     }
-    static async FetchData(url) {
+    static async FetchData(url, postData) {
         try {
-            var data = await axios.get(url);
+            if (!postData)
+                var data = await axios.get(url);
+            else
+                var data = await axios.post(url, postData);
 
             if (typeof data.data == 'object')
                 return data.data;
-            else
-                return { error: 'Server unavailable!' };
+            
+            return { error: 'Server unknown response' };
         } catch {
             return { error: 'Server unavailable!' };
         }

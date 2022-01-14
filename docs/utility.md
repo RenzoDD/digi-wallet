@@ -63,12 +63,12 @@ my-wallet > close
 digi-wallet > Wallet closed!
 ```
 
-## Free
+## Faucet
 
-Get free DigiByte with the `free` command.
+Get free DigiByte with the `faucet` command.
 
 ```
-my-wallet > free
+my-wallet > faucet
 my-wallet > Visit www.digifaucet.org to get free DigiByte!
 ```
 

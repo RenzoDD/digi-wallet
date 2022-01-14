@@ -1,18 +1,15 @@
 #!/usr/bin/env node
 
-process.argv.shift()
-process.argv.shift()
+process.argv.shift();
+process.argv.shift();
 
-global.wallet = {}
+global.wallet = {};
 global.wallet.name = null;
 global.wallet.xpub = null;
 
 const Util = require('./packages/util');
 const Console = require('./packages/console');
 const Wallet = require('./packages/wallet');
-
-Console.Clear();
-Console.Logo();
 
 if (process.argv.length > 0)
 {
@@ -29,6 +26,9 @@ if (process.argv.length > 0)
         if (result.success) Console.Log(result.success);
     }
 }
+
+Console.Clear();
+Console.Logo();
 
 (async function() {
     while(true) {
@@ -121,7 +121,7 @@ if (process.argv.length > 0)
                 Console.Clear();
                 Console.Logo();
                 break;
-            case 'free':
+            case 'faucet':
                 Console.Log("Visit www.digifaucet.org to get free DigiByte!");
                 break;
             case 'help':
