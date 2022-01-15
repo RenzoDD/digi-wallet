@@ -20,6 +20,7 @@ class Console {
         var cmd = Console.Prompt();
 
         var obj = {
+            commandOriginal: "",
             command: "",
             arguments: {},
             flags: {}
@@ -28,7 +29,8 @@ class Console {
         var data = reader.question(cmd + " > ");
         var words = data.split(' ').filter(x => x != "");
     
-        obj.command = (words[0] || "").toLowerCase() || "";
+        obj.commandOriginal = words[0] || "";
+        obj.command = obj.commandOriginal.toLowerCase();
     
         for (var i = 1; i < words.length; i++) {
             var word = words[i];

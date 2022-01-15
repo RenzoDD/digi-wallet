@@ -11,24 +11,27 @@ const Util = require('./packages/util');
 const Console = require('./packages/console');
 const Wallet = require('./packages/wallet');
 
-if (process.argv.length > 0)
-{
-    if (process.argv[0].toLocaleLowerCase() == '-v')
-    {
+if (process.argv.length > 0) {
+    if (process.argv[0].toLocaleLowerCase() == '-v') {
         Console.Log(Util.info.version);
         return;
     } else if (process.argv[0].toLocaleLowerCase() == 'help') {
+        Console.Clear();
+        Console.Logo();
         Wallet.Help();
     } else {
+        Console.Clear();
+        Console.Logo();
         Console.Log("open -path " + process.argv[0]);
         var result = Wallet.OpenWallet(process.argv[0], process.argv[1])
         if (result.error) Console.Log(result.error);
         if (result.success) Console.Log(result.success);
     }
 }
-
-Console.Clear();
-Console.Logo();
+else {
+    Console.Clear();
+    Console.Logo();
+}
 
 (async function() {
     while(true) {
@@ -130,7 +133,13 @@ Console.Logo();
             case 'exit':
                 return;
             default:
-                Console.Log("Unknown command!");
+                if (cmd.command.startsWith('digiid:')) {
+                    var result = await Wallet.DigiID(cmd.commandOriginal, cmd.arguments.index);
+                    if (result.error) Console.Log(result.error);
+                    if (result.success) Console.Log(result.success);
+                }
+                else
+                    Console.Log("Unknown command!");
             case '':
         }
     }

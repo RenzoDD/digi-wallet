@@ -1,19 +1,20 @@
 const DigiByte = require('digibyte-js');
-const BIP39 = DigiByte.BIP39;
-const HDPrivateKey = DigiByte.HDPrivateKey;
-const HDPublicKey = DigiByte.HDPublicKey;
-const Address = DigiByte.Address;
-const PrivateKey = DigiByte.PrivateKey;
-const PublicKey = DigiByte.PublicKey;
-const Unit = DigiByte.Unit;
-const Transaction = DigiByte.Transaction;
-const Script = DigiByte.Script;
+const BIP39 = require('digibyte-js/lib/bip39');
+const HDPrivateKey = require('digibyte-js/lib/hdprivatekey');
+const HDPublicKey = require('digibyte-js/lib/hdpublickey');
+const Address = require('digibyte-js/lib/address');
+const PrivateKey = require('digibyte-js/lib/privatekey');
+const PublicKey = require('digibyte-js/lib/publickey');
+const Unit = require('digibyte-js/lib/unit');
+const Transaction = require('digibyte-js/lib/transaction');
+const Script = require('digibyte-js/lib/script');
 
 const Storage = require('./storage');
 const Console = require('./console');
 const Util = require('./util');
 const BlockChain = require('./blockchain');
 const path = require('path');
+const DigiID = require('digibyte-js/lib/digiid');
 
 class Wallet {
     static CreateWallet(name, password, entropy, type, testnet, nobackup, noentropy) {
@@ -33,7 +34,7 @@ class Wallet {
         if (!password) {
             var password = 1, password1 = 0;
             while (password != password1) {
-                if (password === 1) {
+                if (password !== 1) {
                     Console.Log("The passwords doesn't match!");
                 }
                 password = Console.ReadPassword("Create password");
@@ -213,9 +214,8 @@ class Wallet {
     static OpenWallet(path, password) {
         if (!path) path = Console.ReadLine("Wallet path/name");
 
-        if(!Util.FileExist(path)) {
+        if(!Util.FileExist(path))
             return { error: "The file doesn't exist!" };
-        }
 
         global.wallet.storage = Storage.Open(path);
 
@@ -258,8 +258,7 @@ class Wallet {
 
         return { success: 'Wallet closed!' };
     }
-    static GenerateAddress(change, password, WIF, type, reveal, random, testnet) { 
-        
+    static GenerateAddress(change, password, WIF, type, reveal, random, testnet) {
         var network = testnet ? 'testnet' : 'livenet'
 
         if (random) {
@@ -269,7 +268,7 @@ class Wallet {
             var address = privateKey.toAddress(type, network).toString();
             return { success: "Address created", WIF, address };
         }
-        
+
         if (!WIF) {
             if (!global.wallet.storage)
                 return { error: "No wallet open!" };
@@ -359,8 +358,7 @@ class Wallet {
         var cant = 0;
         var secs = 0;
 
-        while (true)
-        {
+        while (true) {
             var privateKey = new PrivateKey(null, network);
             var address = privateKey.toAddress(type).toString();
             cant++;
@@ -396,7 +394,6 @@ class Wallet {
         return data;
     }
     static async Sweep(wif, data, payload) {
-
         if (!global.wallet.storage)
             return { error: "No wallet open!"};
 
@@ -408,16 +405,13 @@ class Wallet {
         if (!PrivateKey.isValid(wif))
             return { error: 'Invalid WIF!' };
 
-        if (!data && payload)
-            data = Console.ReadLine("Extra data");
-        else
-            data = "";
+        data = (!data && payload) ? Console.ReadLine("Extra data") : "";
 
         var privateKey = new PrivateKey(wif);
 
         var legacy = privateKey.toAddress('legacy', network).toString();
         
-        if (privateKey.compressed){
+        if (privateKey.compressed) {
             var native = privateKey.toAddress('native', network).toString();
             var segwit = privateKey.toAddress('segwit', network).toString();
         }
@@ -485,8 +479,6 @@ class Wallet {
         
         var data = await BlockChain.broadcast(hex);
         return data;
-
-        
     }
     static async Transactions() {
         if (!global.wallet.storage)
@@ -494,7 +486,9 @@ class Wallet {
 
         var data = await BlockChain.xpub(global.wallet.xpub);
         if(!data.transactions) data.transactions = [];
+
         data.success = "Transactions fetched!";
+
         return data;
     }
     static async Explorer(testnet, txid, address) {
@@ -583,9 +577,8 @@ class Wallet {
         Console.Log(" exit:         Exit the terminal");
     }
     static async Send(address, amount, data, payload) {
-        if (!global.wallet.storage) {
+        if (!global.wallet.storage)
             return { error: "No wallet open!" };
-        }
 
         var utxos = await BlockChain.utxos(global.wallet.xpub);
 
@@ -595,9 +588,8 @@ class Wallet {
         var balance = 0;
         utxos.forEach(utxo => { balance += utxo.satoshis })
 
-        if (balance == 0) {
+        if (balance == 0)
             return { error: 'Your wallet is empty!' };
-        }
 
         Console.Log("Available balance: " + Unit.fromSatoshis(balance).toDGB() + ' ' + global.wallet.storage.symbol);
 
@@ -608,10 +600,8 @@ class Wallet {
             return { error: "Invalid address!" };
 
         if (!amount) amount = Console.ReadLine("Amount");
-        if (!data && payload)
-            data = Console.ReadLine("Extra data");
-        else
-            data = "";
+        
+        data = (!data && payload) ? Console.ReadLine("Extra data") : "";
 
         if (amount != 'all') {
             var satoshis = amount = Unit.fromDGB(amount).toSatoshis();
@@ -650,7 +640,6 @@ class Wallet {
             if (amount <= 546)
                 fee = undefined;
         }
-
 
         if (!fee)
             return { error: "Unsuficient funds!" };
@@ -692,6 +681,44 @@ class Wallet {
         
         var data = await BlockChain.broadcast(hex);
         return data;
+    }
+    static async DigiID(uri, index) {
+        if (!global.wallet.storage)
+            return { error: "No wallet open!" };
+
+        var password = Console.ReadPassword("Password");
+        var attempts = 3;
+        while (attempts--) {
+            if (Wallet.CheckPassword(password))
+                break;
+            else if (attempts)
+                password = Console.ReadPassword("Password");
+            
+            if (!attempts) {
+                password = undefined;
+                return { error: "Invalid password!" };
+            }
+        }
+
+        var xprv = global.wallet.storage.xprv;
+        var xprv = Util.DecryptAES256(xprv, password);
+        var xprv = HDPrivateKey.fromString(xprv);
+
+        var digiid = new DigiID(uri);
+        var credentials = digiid.sign(xprv, index || 0);
+
+        xprv = null;
+
+        Console.Log('Negociating: ' + digiid.callback);
+
+        var response = await Util.FetchData(digiid.callback, credentials);
+
+        if (response.error)
+            return response;
+        else
+            response.success = 'Login successful!';
+
+        return response;
     }
     static CheckPassword(password) {
         var passwordDB = global.wallet.storage.password;

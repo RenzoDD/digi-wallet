@@ -42,6 +42,9 @@ class Util {
             if (typeof data.data == 'object')
                 return data.data;
             
+            if (data.data == "")
+                return {};
+            
             return { error: 'Server unknown response' };
         } catch {
             return { error: 'Server unavailable!' };
