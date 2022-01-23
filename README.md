@@ -7,12 +7,23 @@
 
 DigiByte is more than a faster digital currency. It is an innovative blockchain that can be used for digital assets, smart contracts, decentralized applications and secure authentication.
 
+This is a CLI wallet for DigiByte. Is intended for educational purposes, but as it follows all the industries standard, it can be used to securely (as much a hot wallet can be) manage coins.
+
 ## Instalation 📦
 
 Download the lastest binaries [here](https://github.com/RenzoDD/digi-wallet/releases) and execute them using your command prompt or use the npm package manager and install it globally:
 
 ```sh
 npm install -g digi-wallet
+```
+
+To execute the wallet run one of this commands:
+
+```sh
+digibyte
+digibyte wallet.dgb
+digibyte help
+digibyte -v
 ```
 
 ## User Manual 📖
