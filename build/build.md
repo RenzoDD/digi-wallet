@@ -1,12 +1,12 @@
 # Build ✨
 
-To build the `digi-wallet` binary you must have globally installed `pkg` package:
+To build the `digi-wallet` binaries you must have globally installed `pkg` package:
 
 ```sh
 npm install -g pkg
 ```
 
-Then, run the script to build the wallet:
+Then, run this script to build the wallet:
 
 ```sh
 npm run build

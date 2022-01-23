@@ -45,7 +45,11 @@ class Util {
             if (data.data == "")
                 return {};
             
-            return { error: 'Server unknown response' };
+            if (data.status >= 200 && data.status < 300)
+                return { success: data.status + ' OK, but unknown response!' };   
+            else
+                return { error: 'Server unknown response' };
+                
         } catch {
             return { error: 'Server unavailable!' };
         }

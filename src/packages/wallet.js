@@ -111,6 +111,7 @@ class Wallet {
             symbol,
             change: 0,
             index: 0,
+            confirmations: 6,
             version: Util.info.version
         }
 
@@ -191,6 +192,7 @@ class Wallet {
                 symbol,
                 change: 0,
                 index: 0,
+                confirmations: 6,
                 version: Util.info.version
             }
     
@@ -386,14 +388,33 @@ class Wallet {
         if (!global.wallet.storage)
             return { error: "No wallet open!"};
         
-        var data = await BlockChain.xpub(global.wallet.xpub);
+        var data = await Promise.all([BlockChain.xpub(global.wallet.xpub), BlockChain.utxos(global.wallet.xpub)])
+        
+        var utxos = data[1];
+        data = data[0];
+
+        data.confirmed = 0;
+        data.unconfirmed = 0;
+
+        utxos.forEach(utxo => {
+            if (utxo.satoshis != 600) 
+            {
+                if (utxo.confirmations >= global.wallet.storage.confirmations)
+                    data.confirmed += utxo.satoshis;
+                else
+                    data.unconfirmed += utxo.satoshis;
+            }
+        });
+
+        data.confirmed = Unit.fromSatoshis(data.confirmed).toDGB();
+        data.unconfirmed = Unit.fromSatoshis(data.unconfirmed).toDGB();
 
         if (!data.error)
             data.success = "Balance fetched!";
 
         return data;
     }
-    static async Sweep(wif, data, payload) {
+    static async Sweep(wif, data, payload, hard) {
         if (!global.wallet.storage)
             return { error: "No wallet open!"};
 
@@ -422,8 +443,11 @@ class Wallet {
         var valueIn = 0;
         legacy = { address: legacy, utxos: await BlockChain.utxos(legacy), satoshis: 0 };
         for (var i = 0; i < legacy.utxos.length; i++) {
-            legacy.satoshis += legacy.utxos[i].satoshis;
-            utxos.push(legacy.utxos[i]);
+            if (legacy.utxos[i].satoshis !== 600 || hard)
+            {
+                legacy.satoshis += legacy.utxos[i].satoshis;
+                utxos.push(legacy.utxos[i]);
+            }
         }
         valueIn += legacy.satoshis;
         if (legacy.satoshis != 0)
@@ -432,8 +456,11 @@ class Wallet {
         if (native) {
             native = { address: native, utxos: await BlockChain.utxos(native), satoshis: 0 };
             for (var i = 0; i < native.utxos.length; i++) {
-                native.satoshis += native.utxos[i].satoshis;
-                utxos.push(native.utxos[i]);
+                if (native.utxos[i].satoshis !== 600 || hard)
+                {
+                    native.satoshis += native.utxos[i].satoshis;
+                    utxos.push(native.utxos[i]);
+                }
             }
             valueIn += native.satoshis;
             if (native.satoshis != 0)
@@ -442,8 +469,11 @@ class Wallet {
         if (segwit) {
             segwit = { address: segwit, utxos: await BlockChain.utxos(segwit), satoshis: 0 };
             for (var i = 0; i < segwit.utxos.length; i++) {
-                segwit.satoshis += segwit.utxos[i].satoshis;
-                utxos.push(segwit.utxos[i]);
+                if (segwit.utxos[i].satoshis !== 600 || hard)
+                {
+                    segwit.satoshis += segwit.utxos[i].satoshis;
+                    utxos.push(segwit.utxos[i]);
+                }
             }
             valueIn += segwit.satoshis;
             if (segwit.satoshis != 0)
@@ -584,6 +614,8 @@ class Wallet {
 
         if (utxos.error)
             return utxos;
+        
+        utxos = utxos.filter(x => (x.confirmations >= global.wallet.storage.confirmations) && x.satoshis != 600 );
 
         var balance = 0;
         utxos.forEach(utxo => { balance += utxo.satoshis })
@@ -716,7 +748,7 @@ class Wallet {
         if (response.error)
             return response;
         else
-            response.success = 'Login successful!';
+            response.success = 'Message sent!';
 
         return response;
     }

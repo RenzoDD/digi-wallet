@@ -108,7 +108,7 @@ else {
                 if(data.success) Console.Log("TXID: " + data.txid);
                 break;
             case 'sweep':
-                var data = await Wallet.Sweep(cmd.arguments.wif, cmd.arguments.data, cmd.flags.payload);
+                var data = await Wallet.Sweep(cmd.arguments.wif, cmd.arguments.data, cmd.flags.payload, cmd.flags.hard);
                 if(data.error) Console.Log(data.error);
                 if(data.success) Console.Log("TXID: " + data.txid);
                 break;

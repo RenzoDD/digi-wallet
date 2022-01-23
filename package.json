@@ -1,6 +1,6 @@
 {
   "name": "digi-wallet",
-  "version": "0.0.3",
+  "version": "1.0.0",
   "description": "A CLI DigiByte Wallet",
   "main": "src/index.js",
   "bin": {
@@ -38,7 +38,7 @@
   "homepage": "https://github.com/RenzoDD/digi-wallet#readme",
   "dependencies": {
     "axios": "^0.24.0",
-    "digibyte-js": "^1.2.0",
+    "digibyte-js": "^1.2.1",
     "readline-sync": "^1.4.10"
   }
 }

@@ -11,6 +11,8 @@ class BlockChain {
 
         data = data.reverse();
 
+        var addressStr = Address.isValid(xpub) ? xpub : null;
+            
         var utxos = [];
         for (var i = 0; i < data.length; i++) {
             var utxo = {
@@ -18,11 +20,12 @@ class BlockChain {
                 vout: data[i].vout,
                 satoshis: parseInt(data[i].value),
                 height: data[i].height || 0,
+                confirmations: data[i].confirmations || 0,
                 path: data[i].path,
                 script: data[i].scriptPubKey,
-                address: data[i].address
+                address: data[i].address || addressStr
             };
-
+            
             if (!utxo.script) {
                 var address = Address.fromString(utxo.address);
                 var script = Script.fromAddress(address);

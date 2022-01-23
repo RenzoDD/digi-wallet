@@ -7,7 +7,7 @@
 
 DigiByte is more than a faster digital currency. It is an innovative blockchain that can be used for digital assets, smart contracts, decentralized applications and secure authentication.
 
-## Get Started 📦
+## Instalation 📦
 
 Download the lastest binaries [here](https://github.com/RenzoDD/digi-wallet/releases) and execute them using your command prompt or use the npm package manager and install it globally:
 
@@ -17,7 +17,7 @@ npm install -g digi-wallet
 
 ## User Manual 📖
 
-You can find all the documentation and information [here](MANUAL.md).
+You can find all the documentation and information [here](docs/manual.md).
 
 ## Development 🛠️
 
@@ -29,7 +29,7 @@ npm install
 
 ## Building the Binaries ✨
 
-To build the `digi-wallet` binary you must have globally installed `pkg` package:
+To build the `digi-wallet` binaries you must have globally installed `pkg` package:
 
 ```sh
 npm install -g pkg

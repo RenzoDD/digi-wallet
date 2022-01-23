@@ -11,9 +11,10 @@ To redeem a papaer wallet or private key you must use the `sweep` command, it wi
 
 ## Flags
 
-| Flag      | Description           |
-| --------- | --------------------- |
-| --payload | Enable OP Return data |
+| Flag      | Description                         |
+| --------- | ----------------------------------- |
+| --payload | Enable OP Return data               |
+| --hard    | Include (and burn) DigiAsset output |
 
 ## Examples
 
