@@ -1,31 +1,46 @@
 # DigiByte Wallet
 
 ![Licence](https://img.shields.io/badge/licence-MIT-green)
-![NodeJS Version](https://img.shields.io/badge/nodejs-14.15.1-blue)
-![Platform](https://img.shields.io/badge/platform-linux--64%20%7C%20win--64%20%7C%20ios--64-lightgrey)
+![Version](https://img.shields.io/npm/v/digi-wallet?label=version)
+![NodeJS Version](https://img.shields.io/badge/nodejs-14.18.2-blue)
+![Platform](https://img.shields.io/badge/platform-linux--64%20%7C%20win--64%20%7Cmac--64-lightgrey)
 
 DigiByte is more than a faster digital currency. It is an innovative blockchain that can be used for digital assets, smart contracts, decentralized applications and secure authentication.
 
-## Get Started 📦
+This is a CLI wallet for DigiByte. Is intended for educational purposes, but as it follows all the industries standard, it can be used to securely (as much a hot wallet can be) manage coins.
 
-Download your the binary that match your OS and you are ready to go. If you prefer, add to your system `PATH` the folder where you save the file.
+## Instalation 📦
 
+Download the lastest binaries [here](https://github.com/RenzoDD/digi-wallet/releases) and execute them using your command prompt or use the npm package manager and install it globally:
+
+```sh
+npm install -g digi-wallet
+```
+
+To execute the wallet run one of this commands:
+
+```sh
+digibyte
+digibyte wallet.dgb
+digibyte help
+digibyte -v
+```
 
 ## User Manual 📖
 
-You can find all the documentation and information [here](MANUAL.md).
+You can find all the documentation and information [here](docs/manual.md).
 
 ## Development 🛠️
 
 ```sh
-git clone https://github.com/RenzoDD/digibyte-wallet
-cd digibyte-wallet
+git clone https://github.com/RenzoDD/digi-wallet
+cd digi-wallet
 npm install
 ```
 
 ## Building the Binaries ✨
 
-To build the `digibyte-wallet` binary you must have globally installed `pkg` package:
+To build the `digi-wallet` binaries you must have globally installed `pkg` package:
 
 ```sh
 npm install -g pkg
@@ -38,7 +53,7 @@ This will generate the binaries in the `build` folder.
 
 This wallet is for educative-propouses only. It can be use to store real DigiBytes but we do not take any responsability regarding lost funds.
 
-If you find any flaw or trouble please submit a new thread on [Github Issues](https://github.com/RenzoDD/digibyte-wallet/issues)
+If you find any flaw or trouble please submit a new thread on [Github Issues](https://github.com/RenzoDD/digi-wallet/issues)
 
 ## Donate 💰
 
