@@ -1,6 +1,6 @@
 {
   "name": "digi-wallet",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "A CLI DigiByte Wallet",
   "main": "src/index.js",
   "bin": {
